@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Catalog from "./pages/Catalog";
 import Circulation from "./pages/Circulation";
-import "./App.css";
 
 function App() {
   const [activeSection, setActiveSection] = useState("catalog");
