@@ -11,9 +11,9 @@ function Navbar({ activeTab, onTabChange }) {
   return (
     <nav className="navbar-sticky">
       <div className="navbar-container">
-        <a href="#hero" className="navbar-brand" onClick={(e) => { e.preventDefault(); onTabChange("dashboard"); }}>
+        <a href="#dashboard" className="navbar-brand" onClick={(e) => { e.preventDefault(); onTabChange("dashboard"); }}>
           <div className="navbar-brand-icon">
-            <Library size={20} />
+            <Library size={18} />
           </div>
           <span>Library Hub</span>
         </a>
@@ -28,7 +28,7 @@ function Navbar({ activeTab, onTabChange }) {
                   className={`nav-item-btn ${isActive ? "active" : ""}`}
                   onClick={() => onTabChange(item.id)}
                 >
-                  <Icon size={16} />
+                  <Icon size={15} />
                   <span>{item.label}</span>
                 </button>
               </li>

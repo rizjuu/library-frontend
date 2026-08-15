@@ -8,7 +8,6 @@ function Circulation({ onTransactionComplete, showToast }) {
   const [returnBarcode, setReturnBarcode] = useState("");
   const [loadingAction, setLoadingAction] = useState(null); // 'borrow' | 'return' | null
 
-  // 7-day default loan period calculation
   const defaultDueDate = new Date(Date.now() + 7 * 86400000).toLocaleDateString("en-US", {
     weekday: "short",
     year: "numeric",
@@ -68,68 +67,89 @@ function Circulation({ onTransactionComplete, showToast }) {
   };
 
   return (
-    <section id="circulation-section" className="section-wrapper">
-      <div className="section-header">
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div className="section-header-centered">
         <h2 className="section-title">
-          <Repeat size={32} className="text-gradient-purple" />
+          <Repeat size={32} />
           Book Circulation
         </h2>
         <p className="section-subtitle">Borrow and return books using their barcode.</p>
       </div>
 
-      <div className="circulation-grid">
+      <div className="circulation-centered-grid">
         {/* Borrow Panel */}
-        <div className="circulation-panel">
+        <div className="circulation-glass-panel">
           <div>
-            <div className="panel-header">
-              <div className="panel-icon-box borrow">
-                <ArrowUpRight size={26} />
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
+              <div style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "14px",
+                background: "rgba(255, 255, 255, 0.25)",
+                border: "1px solid rgba(255, 255, 255, 0.45)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+                <ArrowUpRight size={24} color="#FFFFFF" />
               </div>
               <div>
-                <h3 className="panel-title">Borrow a Book</h3>
-                <p className="panel-desc">Record a checkout transaction for a patron</p>
+                <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#FFFFFF" }}>Borrow a Book</h3>
+                <p style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.8)", margin: 0 }}>Record a checkout transaction for a patron</p>
               </div>
             </div>
 
             <form onSubmit={handleBorrow}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="borrow-barcode">
+              <div className="form-group-glass">
+                <label className="form-label-glass" htmlFor="borrow-barcode">
                   <Barcode size={14} style={{ display: "inline", marginRight: "6px" }} />
                   Book Barcode *
                 </label>
                 <input
                   id="borrow-barcode"
                   type="text"
-                  className="form-input"
+                  className="form-input-glass"
                   placeholder="Scan or enter barcode (e.g. LIB-0001)..."
                   value={borrowBarcode}
-                  onChange={e => setBorrowBarcode(e.target.value)}
+                  onChange={(e) => setBorrowBarcode(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="borrower-name">
+              <div className="form-group-glass">
+                <label className="form-label-glass" htmlFor="borrower-name">
                   <User size={14} style={{ display: "inline", marginRight: "6px" }} />
                   Borrower Name *
                 </label>
                 <input
                   id="borrower-name"
                   type="text"
-                  className="form-input"
+                  className="form-input-glass"
                   placeholder="Enter full borrower name..."
                   value={borrowerName}
-                  onChange={e => setBorrowerName(e.target.value)}
+                  onChange={(e) => setBorrowerName(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">
+              <div className="form-group-glass">
+                <label className="form-label-glass">
                   <Calendar size={14} style={{ display: "inline", marginRight: "6px" }} />
                   Calculated Due Date (7 Days)
                 </label>
-                <div className="due-date-box">
+                <div style={{
+                  height: "50px",
+                  padding: "0 18px",
+                  borderRadius: "12px",
+                  background: "rgba(255, 255, 255, 0.15)",
+                  border: "1px solid rgba(255, 255, 255, 0.35)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  color: "#FFFFFF",
+                  fontWeight: 700,
+                  fontSize: "14px"
+                }}>
                   <Calendar size={16} />
                   <span>{defaultDueDate}</span>
                 </div>
@@ -139,10 +159,10 @@ function Circulation({ onTransactionComplete, showToast }) {
 
           <button
             type="button"
-            className="btn-primary"
+            className="btn-glass-primary"
             onClick={handleBorrow}
             disabled={loadingAction === "borrow"}
-            style={{ width: "100%", marginTop: "16px" }}
+            style={{ width: "100%", marginTop: "20px" }}
           >
             {loadingAction === "borrow" ? (
               <>
@@ -159,47 +179,56 @@ function Circulation({ onTransactionComplete, showToast }) {
         </div>
 
         {/* Return Panel */}
-        <div className="circulation-panel">
+        <div className="circulation-glass-panel">
           <div>
-            <div className="panel-header">
-              <div className="panel-icon-box return">
-                <ArrowDownLeft size={26} />
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
+              <div style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "14px",
+                background: "rgba(255, 255, 255, 0.25)",
+                border: "1px solid rgba(255, 255, 255, 0.45)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+                <ArrowDownLeft size={24} color="#FFFFFF" />
               </div>
               <div>
-                <h3 className="panel-title">Return a Book</h3>
-                <p className="panel-desc">Record a book return and update availability</p>
+                <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#FFFFFF" }}>Return a Book</h3>
+                <p style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.8)", margin: 0 }}>Record a book return and update availability</p>
               </div>
             </div>
 
             <form onSubmit={handleReturn}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="return-barcode">
+              <div className="form-group-glass">
+                <label className="form-label-glass" htmlFor="return-barcode">
                   <Barcode size={14} style={{ display: "inline", marginRight: "6px" }} />
                   Book Barcode *
                 </label>
                 <input
                   id="return-barcode"
                   type="text"
-                  className="form-input"
+                  className="form-input-glass"
                   placeholder="Scan or enter barcode (e.g. LIB-0001)..."
                   value={returnBarcode}
-                  onChange={e => setReturnBarcode(e.target.value)}
+                  onChange={(e) => setReturnBarcode(e.target.value)}
                   required
                 />
               </div>
 
               <div style={{
                 padding: "16px",
-                background: "rgba(16, 0, 47, 0.5)",
-                borderRadius: "12px",
-                border: "1px solid rgba(139, 92, 246, 0.25)",
+                background: "rgba(255, 255, 255, 0.15)",
+                borderRadius: "14px",
+                border: "1px solid rgba(255, 255, 255, 0.35)",
                 margin: "24px 0",
                 display: "flex",
                 gap: "12px"
               }}>
-                <Info size={20} color="var(--cyan)" style={{ flexShrink: 0, marginTop: "2px" }} />
-                <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                  Enter the barcode of the borrowed book. The system will check in the item and automatically restore status to <strong style={{ color: "#6EE7B7" }}>AVAILABLE</strong>.
+                <Info size={20} color="#FFFFFF" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <p style={{ margin: 0, fontSize: "13px", color: "rgba(255, 255, 255, 0.9)", lineHeight: "1.5" }}>
+                  Enter the barcode of the borrowed book. The system will check in the item and automatically restore status to <strong style={{ color: "#00E676" }}>AVAILABLE</strong>.
                 </p>
               </div>
             </form>
@@ -207,10 +236,10 @@ function Circulation({ onTransactionComplete, showToast }) {
 
           <button
             type="button"
-            className="btn-danger-action"
+            className="btn-glass-primary"
             onClick={handleReturn}
             disabled={loadingAction === "return"}
-            style={{ width: "100%", marginTop: "16px" }}
+            style={{ width: "100%", marginTop: "20px" }}
           >
             {loadingAction === "return" ? (
               <>
@@ -226,7 +255,7 @@ function Circulation({ onTransactionComplete, showToast }) {
           </button>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 

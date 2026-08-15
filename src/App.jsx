@@ -16,7 +16,7 @@ function App() {
   const [toasts, setToasts] = useState([]);
   const [transactionCount, setTransactionCount] = useState(0);
 
-  // Toast Helper
+  // Toast Notifications Helper
   const showToast = useCallback((message, type = "info") => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -34,7 +34,7 @@ function App() {
       setBooks(res.data || []);
     } catch (err) {
       console.error("Failed to load books:", err);
-      showToast("Unable to connect to library database server.", "error");
+      showToast("Unable to connect to MongoDB library server.", "error");
     } finally {
       setLoading(false);
     }
@@ -44,21 +44,10 @@ function App() {
     fetchBooks();
   }, [fetchBooks]);
 
-  // Handle Tab Switch & Smooth Scroll
+  // Tab Switch handler (Separate Page Routing)
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    let sectionId = "";
-    if (tabId === "dashboard") sectionId = "dashboard-section";
-    if (tabId === "books") sectionId = "catalog-section";
-    if (tabId === "circulation") sectionId = "circulation-section";
-    if (tabId === "add-book") sectionId = "add-book-section";
-
-    if (sectionId) {
-      const el = document.getElementById(sectionId);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-      }
-    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleTransactionComplete = () => {
@@ -80,55 +69,67 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Background Glowing Ambient Orbs */}
-      <div className="bg-glow-container">
-        <div className="bg-glow-orb bg-glow-orb-1"></div>
-        <div className="bg-glow-orb bg-glow-orb-2"></div>
-        <div className="bg-glow-orb bg-glow-orb-3"></div>
+      {/* 3D Floating Ambient Spheres (from reference image) */}
+      <div className="bg-spheres-container">
+        <div className="sphere sphere-purple"></div>
+        <div className="sphere sphere-cyan"></div>
+        <div className="sphere sphere-amber"></div>
       </div>
 
       {/* Floating Toast Notification Container */}
       <ToastContainer toasts={toasts} />
 
-      {/* 1. Header / Hero Section */}
-      <div id="hero">
-        <Hero onNavigate={handleTabChange} />
-      </div>
-
-      {/* 2. Sticky Navigation Bar */}
+      {/* Sticky Translucent Navbar Pill */}
       <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
 
-      {/* Main Content Sections */}
+      {/* Main Content Container - Separate Page Routing */}
       <main className="main-content">
-        {/* 3. Dashboard Overview */}
-        <Dashboard
-          totalBooks={totalBooks}
-          availableBooks={availableBooks}
-          borrowedBooks={borrowedBooks}
-          totalTransactions={transactionCount}
-        />
+        {/* Page 1: Dashboard View */}
+        {activeTab === "dashboard" && (
+          <div className="page-view">
+            <Hero onNavigate={handleTabChange} />
+            <Dashboard
+              totalBooks={totalBooks}
+              availableBooks={availableBooks}
+              borrowedBooks={borrowedBooks}
+              totalTransactions={transactionCount}
+            />
+          </div>
+        )}
 
-        {/* 4. Book Catalog Section */}
-        <Catalog
-          books={books}
-          loading={loading}
-          onNavigateToAddBook={() => handleTabChange("add-book")}
-        />
+        {/* Page 2: Book Catalog View */}
+        {activeTab === "books" && (
+          <div className="page-view">
+            <Catalog
+              books={books}
+              loading={loading}
+              onNavigateToAddBook={() => handleTabChange("add-book")}
+            />
+          </div>
+        )}
 
-        {/* 5. Book Circulation Section */}
-        <Circulation
-          onTransactionComplete={handleTransactionComplete}
-          showToast={showToast}
-        />
+        {/* Page 3: Circulation View */}
+        {activeTab === "circulation" && (
+          <div className="page-view">
+            <Circulation
+              onTransactionComplete={handleTransactionComplete}
+              showToast={showToast}
+            />
+          </div>
+        )}
 
-        {/* 6. Add Book Section */}
-        <AddBook
-          onBookAdded={handleBookAdded}
-          showToast={showToast}
-        />
+        {/* Page 4: Add Book View */}
+        {activeTab === "add-book" && (
+          <div className="page-view">
+            <AddBook
+              onBookAdded={handleBookAdded}
+              showToast={showToast}
+            />
+          </div>
+        )}
       </main>
 
-      {/* 7. Footer Section */}
+      {/* Centered Footer */}
       <Footer />
     </div>
   );

@@ -6,67 +6,58 @@ function Dashboard({ totalBooks, availableBooks, borrowedBooks, totalTransaction
       id: "total",
       label: "Total Books",
       value: totalBooks,
-      desc: "Books registered in MongoDB catalog",
-      icon: BookOpen,
-      accentClass: "stat-accent-total"
+      desc: "Registered catalog items",
+      icon: BookOpen
     },
     {
       id: "available",
       label: "Available Books",
       value: availableBooks,
       desc: "Ready for circulation checkout",
-      icon: CheckCircle2,
-      accentClass: "stat-accent-available"
+      icon: CheckCircle2
     },
     {
       id: "borrowed",
       label: "Borrowed Books",
       value: borrowedBooks,
       desc: "Currently issued to patrons",
-      icon: BookmarkX,
-      accentClass: "stat-accent-borrowed"
+      icon: BookmarkX
     },
     {
       id: "transactions",
       label: "Total Transactions",
       value: totalTransactions,
-      desc: "Borrow and return record count",
-      icon: Repeat,
-      accentClass: "stat-accent-transactions"
+      desc: "Borrow & return logs",
+      icon: Repeat
     }
   ];
 
   return (
-    <section id="dashboard-section" className="section-wrapper">
-      <div className="section-header">
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div className="section-header-centered">
         <h2 className="section-title">
-          <BookOpen size={32} className="text-gradient-purple" />
+          <BookOpen size={32} />
           Library Overview
         </h2>
         <p className="section-subtitle">Quick overview of your library activity.</p>
       </div>
 
       <div className="dashboard-grid">
-        {stats.map(stat => {
+        {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.id} className={`stat-card ${stat.accentClass}`}>
-              <div className="stat-top">
-                <span className="stat-label">{stat.label}</span>
-                <div className="stat-icon-wrapper">
-                  <Icon size={24} />
-                </div>
+            <div key={stat.id} className="stat-glass-card">
+              <div className="stat-icon-circle">
+                <Icon size={24} />
               </div>
-
-              <div>
-                <div className="stat-number">{stat.value}</div>
-                <div className="stat-desc">{stat.desc}</div>
-              </div>
+              <span className="stat-label-centered">{stat.label}</span>
+              <div className="stat-number-large">{stat.value}</div>
+              <span className="stat-desc-centered">{stat.desc}</span>
             </div>
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }
 
