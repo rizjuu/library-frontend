@@ -8,10 +8,13 @@ function App() {
   return (
     <div id="app">
       <header className="header">
-        <h1>
-          <span className="header-icon">📚</span>
-          Library Management System
-        </h1>
+        <div className="header-content">
+          <h1>
+            <span className="header-icon">📚</span>
+            Library Management System
+          </h1>
+          <p className="header-credit">by Jeoriz Honculada</p>
+        </div>
       </header>
 
       <nav className="nav-tabs">
