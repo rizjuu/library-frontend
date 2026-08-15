@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { PlusCircle, RotateCcw, Barcode, Book, User, Tag, Layers } from "lucide-react";
+import { motion } from "framer-motion";
+import { Plus, RotateCcw, Barcode, Book, User, Tag, Layers, Loader2 } from "lucide-react";
 import api from "../api";
 
 function AddBook({ onBookAdded, showToast }) {
@@ -13,10 +14,11 @@ function AddBook({ onBookAdded, showToast }) {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleClear = () => {
@@ -31,149 +33,184 @@ function AddBook({ onBookAdded, showToast }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.author || !formData.barcode) {
-      showToast("Please fill in Barcode, Title, and Author", "error");
+    if (!formData.barcode.trim() || !formData.title.trim() || !formData.author.trim()) {
+      if (showToast) {
+        showToast("Please fill in Barcode, Title, and Author fields.", "error");
+      }
       return;
     }
 
     setLoading(true);
     try {
-      const response = await api.post("/books", {
-        barcode: formData.barcode,
-        title: formData.title,
-        author: formData.author,
-        category: formData.category || "General",
-        shelf: formData.shelf || "Shelf A-01",
+      const payload = {
+        barcode: formData.barcode.trim(),
+        title: formData.title.trim(),
+        author: formData.author.trim(),
+        category: formData.category.trim() || "General",
+        shelf: formData.shelf.trim() || "General",
         available: true
-      });
+      };
 
-      showToast(`Book "${formData.title}" added successfully!`, "success");
+      const response = await api.post("/books", payload);
+
+      if (showToast) {
+        showToast(`Book "${formData.title.trim()}" added successfully to catalog!`, "success");
+      }
       handleClear();
       if (onBookAdded) onBookAdded(response.data);
     } catch (error) {
       console.error("Failed to add book:", error);
-      showToast(error.response?.data?.message || "Failed to add book to database.", "error");
+      if (showToast) {
+        showToast(
+          error.response?.data?.message || "Failed to add book to catalog. Check if barcode is unique.",
+          "error"
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div className="section-header-centered">
-        <h2 className="section-title">
-          <PlusCircle size={32} />
-          Add New Book
-        </h2>
-        <p className="section-subtitle">Add a new book to the library catalog.</p>
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="page-title-row">
+        <div>
+          <h2 className="page-title">Add New Book</h2>
+          <p className="page-subtitle">Add a new book to the library catalog.</p>
+        </div>
       </div>
 
-      <div className="form-glass-card">
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-            {/* Barcode */}
-            <div className="form-group-glass">
-              <label className="form-label-glass" htmlFor="add-barcode">
-                <Barcode size={14} style={{ display: "inline", marginRight: "6px" }} />
-                Barcode *
-              </label>
-              <input
-                id="add-barcode"
-                name="barcode"
-                type="text"
-                className="form-input-glass"
-                placeholder="e.g. LIB-0006"
-                value={formData.barcode}
-                onChange={handleChange}
-                required
-              />
+      <div className="addbook-wrapper">
+        <div className="addbook-card glass-card">
+          <form onSubmit={handleSubmit}>
+            <div className="form-grid-2col">
+              {/* Barcode */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="barcode">
+                  <Barcode size={14} />
+                  Barcode
+                </label>
+                <input
+                  id="barcode"
+                  name="barcode"
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. LIB-0001"
+                  value={formData.barcode}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* Title */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="title">
+                  <Book size={14} />
+                  Title
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. The Great Gatsby"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* Author */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="author">
+                  <User size={14} />
+                  Author
+                </label>
+                <input
+                  id="author"
+                  name="author"
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. F. Scott Fitzgerald"
+                  value={formData.author}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* Category */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="category">
+                  <Tag size={14} />
+                  Category
+                </label>
+                <input
+                  id="category"
+                  name="category"
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Fiction, Classic, Science"
+                  value={formData.category}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
-            {/* Title */}
-            <div className="form-group-glass">
-              <label className="form-label-glass" htmlFor="add-title">
-                <Book size={14} style={{ display: "inline", marginRight: "6px" }} />
-                Title *
-              </label>
-              <input
-                id="add-title"
-                name="title"
-                type="text"
-                className="form-input-glass"
-                placeholder="Enter book title..."
-                value={formData.title}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* Author */}
-            <div className="form-group-glass">
-              <label className="form-label-glass" htmlFor="add-author">
-                <User size={14} style={{ display: "inline", marginRight: "6px" }} />
-                Author *
-              </label>
-              <input
-                id="add-author"
-                name="author"
-                type="text"
-                className="form-input-glass"
-                placeholder="Enter author name..."
-                value={formData.author}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* Category */}
-            <div className="form-group-glass">
-              <label className="form-label-glass" htmlFor="add-category">
-                <Tag size={14} style={{ display: "inline", marginRight: "6px" }} />
-                Category
-              </label>
-              <input
-                id="add-category"
-                name="category"
-                type="text"
-                className="form-input-glass"
-                placeholder="e.g. Classic, Sci-Fi, Fiction"
-                value={formData.category}
-                onChange={handleChange}
-              />
-            </div>
-
-            {/* Shelf */}
-            <div className="form-group-glass" style={{ gridColumn: "span 2" }}>
-              <label className="form-label-glass" htmlFor="add-shelf">
-                <Layers size={14} style={{ display: "inline", marginRight: "6px" }} />
+            {/* Shelf (Full Width) */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="shelf">
+                <Layers size={14} />
                 Shelf Location
               </label>
               <input
-                id="add-shelf"
+                id="shelf"
                 name="shelf"
                 type="text"
-                className="form-input-glass"
-                placeholder="e.g. Shelf A-01, B-03"
+                className="form-input"
+                placeholder="e.g. Shelf A-01, Section 2"
                 value={formData.shelf}
                 onChange={handleChange}
               />
             </div>
-          </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", marginTop: "28px" }}>
-            <button type="submit" className="btn-glass-primary" disabled={loading}>
-              <PlusCircle size={18} />
-              {loading ? "Adding Book..." : "Add Book"}
-            </button>
+            {/* Form Actions */}
+            <div className="form-actions">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Adding Book...
+                  </>
+                ) : (
+                  <>
+                    <Plus size={16} />
+                    Add Book
+                  </>
+                )}
+              </button>
 
-            <button type="button" className="btn-glass-secondary" onClick={handleClear} disabled={loading}>
-              <RotateCcw size={18} />
-              Clear
-            </button>
-          </div>
-        </form>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleClear}
+                disabled={loading}
+              >
+                <RotateCcw size={16} />
+                Clear
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

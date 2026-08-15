@@ -1,25 +1,35 @@
-import { CheckCircle2, AlertCircle, Info, AlertTriangle } from "lucide-react";
+import { AnimatePresence, motion } from 'framer-motion';
+import { CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 
-function ToastContainer({ toasts }) {
-  if (!toasts || toasts.length === 0) return null;
+const iconMap = {
+  success: CheckCircle2,
+  error: AlertCircle,
+  warning: AlertTriangle,
+  info: Info,
+};
 
+export default function ToastContainer({ toasts = [] }) {
   return (
     <div className="toast-container" role="region" aria-label="Notifications">
-      {toasts.map(toast => {
-        let Icon = CheckCircle2;
-        if (toast.type === "error") Icon = AlertCircle;
-        if (toast.type === "warning") Icon = AlertTriangle;
-        if (toast.type === "info") Icon = Info;
-
-        return (
-          <div key={toast.id} className={`toast-item ${toast.type}`}>
-            <Icon size={20} className="toast-icon" />
-            <span>{toast.message}</span>
-          </div>
-        );
-      })}
+      <AnimatePresence>
+        {toasts.map((toast) => {
+          const Icon = iconMap[toast.type] || Info;
+          return (
+            <motion.div
+              key={toast.id}
+              className={`toast-item ${toast.type || 'info'}`}
+              initial={{ opacity: 0, x: 40, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 40, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              layout
+            >
+              <Icon size={18} />
+              <span>{toast.message}</span>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 }
-
-export default ToastContainer;

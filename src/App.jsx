@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
+import { AnimatePresence } from "framer-motion";
 import api from "./api";
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
 import Catalog from "./pages/Catalog";
 import Circulation from "./pages/Circulation";
 import AddBook from "./pages/AddBook";
 import ToastContainer from "./components/ToastContainer";
 import Footer from "./components/Footer";
+import { LayoutDashboard, BookOpen, Repeat, PlusCircle } from "lucide-react";
 
 function App() {
   const [books, setBooks] = useState([]);
@@ -16,17 +18,14 @@ function App() {
   const [toasts, setToasts] = useState([]);
   const [transactionCount, setTransactionCount] = useState(0);
 
-  // Toast Notifications Helper
   const showToast = useCallback((message, type = "info") => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
-
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
   }, []);
 
-  // Fetch Books from MongoDB Backend API
   const fetchBooks = useCallback(async () => {
     try {
       setLoading(true);
@@ -34,7 +33,7 @@ function App() {
       setBooks(res.data || []);
     } catch (err) {
       console.error("Failed to load books:", err);
-      showToast("Unable to connect to MongoDB library server.", "error");
+      showToast("Unable to connect to library database.", "error");
     } finally {
       setLoading(false);
     }
@@ -44,10 +43,8 @@ function App() {
     fetchBooks();
   }, [fetchBooks]);
 
-  // Tab Switch handler (Separate Page Routing)
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleTransactionComplete = () => {
@@ -62,75 +59,88 @@ function App() {
     fetchBooks();
   };
 
-  // Stats Calculations
   const totalBooks = books.length;
   const availableBooks = books.filter((b) => b.available).length;
   const borrowedBooks = books.filter((b) => !b.available).length;
 
-  return (
-    <div className="app-container">
-      {/* 3D Floating Ambient Spheres (from reference image) */}
-      <div className="bg-spheres-container">
-        <div className="sphere sphere-purple"></div>
-        <div className="sphere sphere-cyan"></div>
-        <div className="sphere sphere-amber"></div>
-      </div>
+  const mobileNavItems = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "books", label: "Books", icon: BookOpen },
+    { id: "circulation", label: "Circulation", icon: Repeat },
+    { id: "add-book", label: "Add", icon: PlusCircle },
+  ];
 
-      {/* Floating Toast Notification Container */}
+  return (
+    <div className="app-shell">
+      {/* Toast notifications */}
       <ToastContainer toasts={toasts} />
 
-      {/* Sticky Translucent Navbar Pill */}
-      <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
+      {/* Sidebar (desktop) */}
+      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
 
-      {/* Main Content Container - Separate Page Routing */}
+      {/* Top header bar */}
+      <Header />
+
+      {/* Main content area */}
       <main className="main-content">
-        {/* Page 1: Dashboard View */}
-        {activeTab === "dashboard" && (
-          <div className="page-view">
-            <Hero onNavigate={handleTabChange} />
+        <AnimatePresence mode="wait">
+          {activeTab === "dashboard" && (
             <Dashboard
+              key="dashboard"
               totalBooks={totalBooks}
               availableBooks={availableBooks}
               borrowedBooks={borrowedBooks}
               totalTransactions={transactionCount}
+              books={books}
+              onNavigate={handleTabChange}
             />
-          </div>
-        )}
+          )}
 
-        {/* Page 2: Book Catalog View */}
-        {activeTab === "books" && (
-          <div className="page-view">
+          {activeTab === "books" && (
             <Catalog
+              key="books"
               books={books}
               loading={loading}
               onNavigateToAddBook={() => handleTabChange("add-book")}
             />
-          </div>
-        )}
+          )}
 
-        {/* Page 3: Circulation View */}
-        {activeTab === "circulation" && (
-          <div className="page-view">
+          {activeTab === "circulation" && (
             <Circulation
+              key="circulation"
               onTransactionComplete={handleTransactionComplete}
               showToast={showToast}
             />
-          </div>
-        )}
+          )}
 
-        {/* Page 4: Add Book View */}
-        {activeTab === "add-book" && (
-          <div className="page-view">
+          {activeTab === "add-book" && (
             <AddBook
+              key="add-book"
               onBookAdded={handleBookAdded}
               showToast={showToast}
             />
-          </div>
-        )}
+          )}
+        </AnimatePresence>
+
+        <Footer />
       </main>
 
-      {/* Centered Footer */}
-      <Footer />
+      {/* Mobile bottom nav */}
+      <div className="mobile-nav">
+        {mobileNavItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              className={`mobile-nav-btn ${activeTab === item.id ? "active" : ""}`}
+              onClick={() => handleTabChange(item.id)}
+            >
+              <Icon size={20} />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
