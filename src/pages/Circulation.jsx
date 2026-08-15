@@ -1,213 +1,232 @@
 import { useState } from "react";
+import { Repeat, ArrowUpRight, ArrowDownLeft, Barcode, User, Calendar, Info, CheckCircle2, RefreshCw } from "lucide-react";
 import api from "../api";
 
-function Circulation() {
-  const [barcode, setBarcode] = useState("");
+function Circulation({ onTransactionComplete, showToast }) {
+  const [borrowBarcode, setBorrowBarcode] = useState("");
   const [borrowerName, setBorrowerName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
+  const [returnBarcode, setReturnBarcode] = useState("");
+  const [loadingAction, setLoadingAction] = useState(null); // 'borrow' | 'return' | null
 
-  const showMessage = (text, type) => {
-    setMessage(text);
-    setMessageType(type);
-    setTimeout(() => setMessage(""), 4000);
-  };
+  // 7-day default loan period calculation
+  const defaultDueDate = new Date(Date.now() + 7 * 86400000).toLocaleDateString("en-US", {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
 
-  const borrow = async () => {
-    if (!barcode || !borrowerName) {
-      showMessage("Please enter both barcode and borrower name", "error");
+  const handleBorrow = async (e) => {
+    if (e) e.preventDefault();
+    if (!borrowBarcode || !borrowerName) {
+      showToast("Please enter both barcode and borrower name.", "error");
       return;
     }
 
-    setLoading(true);
+    setLoadingAction("borrow");
     try {
       await api.post("/transactions/borrow", {
-        barcode,
+        barcode: borrowBarcode,
         borrowerName,
         dueDate: new Date(Date.now() + 7 * 86400000)
       });
 
-      showMessage(`✓ Book borrowed successfully for ${borrowerName}!`, "success");
-      setBarcode("");
+      showToast(`Book checkout complete for "${borrowerName}"!`, "success");
+      setBorrowBarcode("");
       setBorrowerName("");
+      if (onTransactionComplete) onTransactionComplete();
     } catch (error) {
-      showMessage(error.response?.data?.message || "Failed to borrow book", "error");
+      console.error("Borrow transaction failed:", error);
+      showToast(error.response?.data?.message || "Failed to borrow book. Check barcode or availability.", "error");
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
-  const returnBook = async () => {
-    if (!barcode) {
-      showMessage("Please enter barcode to return", "error");
+  const handleReturn = async (e) => {
+    if (e) e.preventDefault();
+    if (!returnBarcode) {
+      showToast("Please enter barcode to return book.", "error");
       return;
     }
 
-    setLoading(true);
+    setLoadingAction("return");
     try {
       await api.post("/transactions/return", {
-        barcode
+        barcode: returnBarcode
       });
 
-      showMessage("✓ Book returned successfully!", "success");
-      setBarcode("");
-      setBorrowerName("");
+      showToast("Book returned successfully! Catalog updated.", "success");
+      setReturnBarcode("");
+      if (onTransactionComplete) onTransactionComplete();
     } catch (error) {
-      showMessage(error.response?.data?.message || "Failed to return book", "error");
+      console.error("Return transaction failed:", error);
+      showToast(error.response?.data?.message || "Failed to return book. Verify barcode is borrowed.", "error");
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   return (
-    <div>
-      <h2>🔄 Circulation Management</h2>
+    <section id="circulation-section" className="section-wrapper">
+      <div className="section-header">
+        <h2 className="section-title">
+          <Repeat size={32} className="text-gradient-purple" />
+          Book Circulation
+        </h2>
+        <p className="section-subtitle">Borrow and return books using their barcode.</p>
+      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2.5rem", "@media (max-width: 1024px)": { gridTemplateColumns: "1fr" } }}>
-        {/* Borrow Section */}
-        <div className="form-section">
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📤</div>
-            <h3 style={{ marginTop: 0, color: "var(--text-h)", fontSize: "1.5rem" }}>Borrow Book</h3>
-            <p style={{ color: "var(--text-light)", margin: 0 }}>Record a book checkout transaction</p>
-          </div>
-
-          {message && messageType === "error" && (
-            <div
-              style={{
-                padding: "1rem",
-                marginBottom: "1.5rem",
-                borderRadius: "0.75rem",
-                backgroundColor: "rgba(239, 68, 68, 0.1)",
-                color: "var(--danger)",
-                border: "1px solid var(--danger)",
-                fontSize: "0.95rem"
-              }}
-            >
-              {message}
+      <div className="circulation-grid">
+        {/* Borrow Panel */}
+        <div className="circulation-panel">
+          <div>
+            <div className="panel-header">
+              <div className="panel-icon-box borrow">
+                <ArrowUpRight size={26} />
+              </div>
+              <div>
+                <h3 className="panel-title">Borrow a Book</h3>
+                <p className="panel-desc">Record a checkout transaction for a patron</p>
+              </div>
             </div>
-          )}
 
-          {message && messageType === "success" && (
-            <div
-              style={{
-                padding: "1rem",
-                marginBottom: "1.5rem",
-                borderRadius: "0.75rem",
-                backgroundColor: "rgba(16, 185, 129, 0.1)",
-                color: "var(--success)",
-                border: "1px solid var(--success)",
-                fontSize: "0.95rem"
-              }}
-            >
-              {message}
-            </div>
-          )}
+            <form onSubmit={handleBorrow}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="borrow-barcode">
+                  <Barcode size={14} style={{ display: "inline", marginRight: "6px" }} />
+                  Book Barcode *
+                </label>
+                <input
+                  id="borrow-barcode"
+                  type="text"
+                  className="form-input"
+                  placeholder="Scan or enter barcode (e.g. LIB-0001)..."
+                  value={borrowBarcode}
+                  onChange={e => setBorrowBarcode(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="barcode">📌 Book Barcode</label>
-            <input
-              id="barcode"
-              type="text"
-              placeholder="Scan or enter barcode..."
-              value={barcode}
-              onChange={e => setBarcode(e.target.value)}
-              onKeyPress={e => e.key === "Enter" && borrow()}
-              autoFocus
-            />
-          </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="borrower-name">
+                  <User size={14} style={{ display: "inline", marginRight: "6px" }} />
+                  Borrower Name *
+                </label>
+                <input
+                  id="borrower-name"
+                  type="text"
+                  className="form-input"
+                  placeholder="Enter full borrower name..."
+                  value={borrowerName}
+                  onChange={e => setBorrowerName(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="borrower">👤 Borrower Name</label>
-            <input
-              id="borrower"
-              type="text"
-              placeholder="Enter borrower name..."
-              value={borrowerName}
-              onChange={e => setBorrowerName(e.target.value)}
-              onKeyPress={e => e.key === "Enter" && borrow()}
-            />
-          </div>
-
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>📅 Due Date</label>
-            <div style={{ padding: "1rem", background: "var(--bg)", borderRadius: "0.75rem", border: "2px solid var(--border)", color: "var(--text-light)" }}>
-              {new Date(Date.now() + 7 * 86400000).toLocaleDateString()}
-            </div>
+              <div className="form-group">
+                <label className="form-label">
+                  <Calendar size={14} style={{ display: "inline", marginRight: "6px" }} />
+                  Calculated Due Date (7 Days)
+                </label>
+                <div className="due-date-box">
+                  <Calendar size={16} />
+                  <span>{defaultDueDate}</span>
+                </div>
+              </div>
+            </form>
           </div>
 
           <button
-            className="btn btn-success"
-            onClick={borrow}
-            disabled={loading}
-            style={{ width: "100%", marginTop: "2rem" }}
+            type="button"
+            className="btn-primary"
+            onClick={handleBorrow}
+            disabled={loadingAction === "borrow"}
+            style={{ width: "100%", marginTop: "16px" }}
           >
-            {loading ? "⏳ Processing..." : "✓ Borrow Book"}
+            {loadingAction === "borrow" ? (
+              <>
+                <RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }} />
+                Processing Borrow...
+              </>
+            ) : (
+              <>
+                <ArrowUpRight size={18} />
+                Borrow Book
+              </>
+            )}
           </button>
         </div>
 
-        {/* Return Section */}
-        <div className="form-section">
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📥</div>
-            <h3 style={{ marginTop: 0, color: "var(--text-h)", fontSize: "1.5rem" }}>Return Book</h3>
-            <p style={{ color: "var(--text-light)", margin: 0 }}>Record a book checkin transaction</p>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="returnBarcode">📌 Book Barcode</label>
-            <input
-              id="returnBarcode"
-              type="text"
-              placeholder="Scan or enter barcode..."
-              value={barcode}
-              onChange={e => setBarcode(e.target.value)}
-              onKeyPress={e => e.key === "Enter" && returnBook()}
-            />
-          </div>
-
-          <div style={{ padding: "1.5rem", background: "var(--bg-secondary)", borderRadius: "0.75rem", border: "1px solid var(--border)", marginBottom: "2rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "var(--text-light)", fontSize: "0.95rem" }}>
-              <span style={{ fontSize: "1.5rem" }}>ℹ️</span>
-              <p style={{ margin: 0 }}>Enter the barcode of the book being returned. The system will automatically process the return.</p>
+        {/* Return Panel */}
+        <div className="circulation-panel">
+          <div>
+            <div className="panel-header">
+              <div className="panel-icon-box return">
+                <ArrowDownLeft size={26} />
+              </div>
+              <div>
+                <h3 className="panel-title">Return a Book</h3>
+                <p className="panel-desc">Record a book return and update availability</p>
+              </div>
             </div>
+
+            <form onSubmit={handleReturn}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="return-barcode">
+                  <Barcode size={14} style={{ display: "inline", marginRight: "6px" }} />
+                  Book Barcode *
+                </label>
+                <input
+                  id="return-barcode"
+                  type="text"
+                  className="form-input"
+                  placeholder="Scan or enter barcode (e.g. LIB-0001)..."
+                  value={returnBarcode}
+                  onChange={e => setReturnBarcode(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{
+                padding: "16px",
+                background: "rgba(16, 0, 47, 0.5)",
+                borderRadius: "12px",
+                border: "1px solid rgba(139, 92, 246, 0.25)",
+                margin: "24px 0",
+                display: "flex",
+                gap: "12px"
+              }}>
+                <Info size={20} color="var(--cyan)" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                  Enter the barcode of the borrowed book. The system will check in the item and automatically restore status to <strong style={{ color: "#6EE7B7" }}>AVAILABLE</strong>.
+                </p>
+              </div>
+            </form>
           </div>
 
           <button
-            className="btn btn-danger"
-            onClick={returnBook}
-            disabled={loading}
-            style={{ width: "100%" }}
+            type="button"
+            className="btn-danger-action"
+            onClick={handleReturn}
+            disabled={loadingAction === "return"}
+            style={{ width: "100%", marginTop: "16px" }}
           >
-            {loading ? "⏳ Processing..." : "↩ Return Book"}
+            {loadingAction === "return" ? (
+              <>
+                <RefreshCw size={18} style={{ animation: "spin 1s linear infinite" }} />
+                Processing Return...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={18} />
+                Return Book
+              </>
+            )}
           </button>
         </div>
       </div>
-
-      {/* Tips Section */}
-      <div style={{ marginTop: "3rem", padding: "2rem", backgroundColor: "var(--bg-secondary)", borderRadius: "1.25rem", border: "2px solid var(--primary-light)" }}>
-        <h4 style={{ marginTop: 0, color: "var(--primary)", fontSize: "1.25rem", fontWeight: 700 }}>💡 Helpful Tips</h4>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.5rem" }}>
-          <div>
-            <p style={{ fontWeight: 700, color: "var(--text-h)", marginBottom: "0.5rem" }}>🔍 Scan Barcodes</p>
-            <p style={{ color: "var(--text-light)", margin: 0, fontSize: "0.95rem" }}>Use a barcode scanner for quick and accurate book identification</p>
-          </div>
-          <div>
-            <p style={{ fontWeight: 700, color: "var(--text-h)", marginBottom: "0.5rem" }}>📝 Record Names</p>
-            <p style={{ color: "var(--text-light)", margin: 0, fontSize: "0.95rem" }}>Always enter the borrower's name for proper record keeping</p>
-          </div>
-          <div>
-            <p style={{ fontWeight: 700, color: "var(--text-h)", marginBottom: "0.5rem" }}>📅 7-Day Loan</p>
-            <p style={{ color: "var(--text-light)", margin: 0, fontSize: "0.95rem" }}>Standard loan period is 7 days from the borrow date</p>
-          </div>
-          <div>
-            <p style={{ fontWeight: 700, color: "var(--text-h)", marginBottom: "0.5rem" }}>✅ Verify Returns</p>
-            <p style={{ color: "var(--text-light)", margin: 0, fontSize: "0.95rem" }}>Always confirm successful return with the system</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }
 
