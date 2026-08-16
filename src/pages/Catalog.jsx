@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Search, PlusCircle, Barcode } from "lucide-react";
+import { BookOpen, Search, PlusCircle, Barcode, Filter } from "lucide-react";
 
 function Catalog({ books = [], loading = false, onNavigateToAddBook }) {
   const [search, setSearch] = useState("");
@@ -33,18 +33,18 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.3, cubicBezier: [0.16, 1, 0.3, 1] }}
     >
       {/* Page Title Row */}
       <div className="page-title-row">
         <div>
-          <h2 className="page-title">Book Catalog</h2>
-          <p className="page-subtitle">Browse and manage your library collection.</p>
+          <h1 className="page-title">Book Catalog</h1>
+          <p className="page-subtitle">Browse, filter, and manage your library collection.</p>
         </div>
         <button className="btn btn-primary" onClick={onNavigateToAddBook}>
-          <PlusCircle size={16} />
+          <PlusCircle size={20} className="w-5 h-5" />
           Add Book
         </button>
       </div>
@@ -52,7 +52,7 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook }) {
       {/* Catalog Toolbar */}
       <div className="catalog-toolbar">
         <div className="toolbar-search">
-          <Search size={16} className="toolbar-search-icon" />
+          <Search size={20} className="toolbar-search-icon w-5 h-5" />
           <input
             type="text"
             className="toolbar-search-input"
@@ -90,28 +90,28 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook }) {
 
       {/* Loading, Empty, and Grid States */}
       {loading ? (
-        <div className="empty-state glass-card">
-          <BookOpen size={48} className="empty-state-icon" />
+        <div className="empty-state">
+          <BookOpen size={48} className="empty-state-icon w-12 h-12" />
           <h3 className="empty-state-title">Loading Catalog...</h3>
           <p className="empty-state-desc">Fetching book collection from the database.</p>
         </div>
       ) : books.length === 0 ? (
-        <div className="empty-state glass-card">
-          <BookOpen size={48} className="empty-state-icon" />
+        <div className="empty-state">
+          <BookOpen size={48} className="empty-state-icon w-12 h-12" />
           <h3 className="empty-state-title">No Books Found</h3>
-          <p className="empty-state-desc">Your library catalog is currently empty. Get started by adding a book.</p>
+          <p className="empty-state-desc">Your library catalog is currently empty. Get started by adding a new title.</p>
           <button className="btn btn-primary" onClick={onNavigateToAddBook}>
-            <PlusCircle size={16} />
+            <PlusCircle size={20} className="w-5 h-5" />
             Add Book
           </button>
         </div>
       ) : filteredBooks.length === 0 ? (
-        <div className="empty-state glass-card">
-          <Search size={48} className="empty-state-icon" />
+        <div className="empty-state">
+          <Filter size={48} className="empty-state-icon w-12 h-12" />
           <h3 className="empty-state-title">No Matching Books</h3>
           <p className="empty-state-desc">No books match your current search and filter criteria.</p>
           <button
-            className="btn btn-outline"
+            className="btn btn-secondary"
             onClick={() => {
               setSearch("");
               setCategoryFilter("all");
@@ -124,13 +124,14 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook }) {
       ) : (
         <div className="book-grid">
           {filteredBooks.map((book) => (
-            <div key={book._id || book.barcode} className="book-card glass-card">
+            <div key={book._id || book.barcode} className="book-card">
               <div>
                 <div className="book-card-head">
                   <div className="book-icon-box">
-                    <BookOpen size={20} />
+                    <BookOpen size={24} className="w-6 h-6" />
                   </div>
-                  <span className={`status-pill ${book.available ? "available" : "borrowed"}`}>
+                  <span className={`status-pill ${book.available ? "active" : "overdue"}`}>
+                    <span className="status-pill-dot" />
                     {book.available ? "Available" : "Borrowed"}
                   </span>
                 </div>
@@ -158,7 +159,7 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook }) {
                   <div className="book-meta-row">
                     <span className="book-meta-label">Barcode</span>
                     <span className="barcode-chip">
-                      <Barcode size={13} />
+                      <Barcode size={16} className="w-4 h-4" />
                       {book.barcode || "N/A"}
                     </span>
                   </div>

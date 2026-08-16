@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDownLeft, Barcode, User, Calendar, Info, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  Barcode,
+  User,
+  Calendar,
+  Info,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 import api from "../api";
 
 function Circulation({ onTransactionComplete, showToast }) {
@@ -15,7 +24,7 @@ function Circulation({ onTransactionComplete, showToast }) {
     weekday: "short",
     year: "numeric",
     month: "short",
-    day: "numeric"
+    day: "numeric",
   });
 
   const handleBorrow = async (e) => {
@@ -30,7 +39,7 @@ function Circulation({ onTransactionComplete, showToast }) {
       const response = await api.post("/transactions/borrow", {
         barcode: borrowBarcode.trim(),
         borrowerName: borrowerName.trim(),
-        dueDate: dueDateObj
+        dueDate: dueDateObj,
       });
 
       if (showToast) {
@@ -62,7 +71,7 @@ function Circulation({ onTransactionComplete, showToast }) {
     setLoadingAction("return");
     try {
       const response = await api.post("/transactions/return", {
-        barcode: returnBarcode.trim()
+        barcode: returnBarcode.trim(),
       });
 
       if (showToast) {
@@ -74,7 +83,7 @@ function Circulation({ onTransactionComplete, showToast }) {
       console.error("Return transaction failed:", error);
       if (showToast) {
         showToast(
-          error.response?.data?.message || "Failed to return book. Verify the barcode is currently borrowed.",
+          error.response?.data?.message || "Failed to return book. Verify barcode is currently borrowed.",
           "error"
         );
       }
@@ -85,23 +94,23 @@ function Circulation({ onTransactionComplete, showToast }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.3, cubicBezier: [0.16, 1, 0.3, 1] }}
     >
       <div className="page-title-row">
         <div>
-          <h2 className="page-title">Book Circulation</h2>
-          <p className="page-subtitle">Borrow and return books using their barcode.</p>
+          <h1 className="page-title">Book Circulation</h1>
+          <p className="page-subtitle">Borrow and return books using quick barcode lookup.</p>
         </div>
       </div>
 
       <div className="circ-grid">
-        {/* Left: Borrow Panel */}
-        <div className="circ-panel glass-card">
+        {/* Left Panel: Borrow */}
+        <div className="circ-panel">
           <div className="circ-panel-head">
             <div className="circ-panel-icon borrow">
-              <ArrowUpRight size={22} />
+              <ArrowUpRight size={24} className="w-6 h-6" />
             </div>
             <div>
               <h3 className="circ-panel-title">Borrow a Book</h3>
@@ -112,7 +121,7 @@ function Circulation({ onTransactionComplete, showToast }) {
           <form onSubmit={handleBorrow}>
             <div className="form-group">
               <label className="form-label" htmlFor="borrow-barcode">
-                <Barcode size={14} />
+                <Barcode size={16} className="w-4 h-4" />
                 Barcode
               </label>
               <input
@@ -128,7 +137,7 @@ function Circulation({ onTransactionComplete, showToast }) {
 
             <div className="form-group">
               <label className="form-label" htmlFor="borrower-name">
-                <User size={14} />
+                <User size={16} className="w-4 h-4" />
                 Borrower Name
               </label>
               <input
@@ -144,11 +153,11 @@ function Circulation({ onTransactionComplete, showToast }) {
 
             <div className="form-group">
               <label className="form-label">
-                <Calendar size={14} />
+                <Calendar size={16} className="w-4 h-4" />
                 Due Date
               </label>
               <div className="form-readonly">
-                <Calendar size={16} />
+                <Calendar size={18} className="w-5 h-5" />
                 <span>{formattedDueDate}</span>
               </div>
             </div>
@@ -160,12 +169,12 @@ function Circulation({ onTransactionComplete, showToast }) {
             >
               {loadingAction === "borrow" ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={20} className="w-5 h-5 animate-spin" />
                   Processing Checkout...
                 </>
               ) : (
                 <>
-                  <ArrowUpRight size={16} />
+                  <ArrowUpRight size={20} className="w-5 h-5" />
                   Borrow Book
                 </>
               )}
@@ -173,22 +182,22 @@ function Circulation({ onTransactionComplete, showToast }) {
           </form>
         </div>
 
-        {/* Right: Return Panel */}
-        <div className="circ-panel glass-card">
+        {/* Right Panel: Return */}
+        <div className="circ-panel">
           <div className="circ-panel-head">
             <div className="circ-panel-icon return">
-              <ArrowDownLeft size={22} />
+              <ArrowDownLeft size={24} className="w-6 h-6" />
             </div>
             <div>
               <h3 className="circ-panel-title">Return a Book</h3>
-              <p className="circ-panel-desc">Process a book return and restore availability</p>
+              <p className="circ-panel-desc">Process a book return and restore stock</p>
             </div>
           </div>
 
           <form onSubmit={handleReturn}>
             <div className="form-group">
               <label className="form-label" htmlFor="return-barcode">
-                <Barcode size={14} />
+                <Barcode size={16} className="w-4 h-4" />
                 Barcode
               </label>
               <input
@@ -203,26 +212,26 @@ function Circulation({ onTransactionComplete, showToast }) {
             </div>
 
             <div className="form-info-box">
-              <Info size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
+              <Info size={20} className="w-5 h-5" style={{ flexShrink: 0, marginTop: "2px" }} />
               <p>
                 Enter the barcode of the borrowed book. The system will check in the item and automatically restore its status to Available.
               </p>
             </div>
 
-            <div style={{ marginTop: "20px" }}>
+            <div style={{ marginTop: "24px" }}>
               <button
                 type="submit"
-                className="btn btn-outline btn-full"
+                className="btn btn-secondary btn-full"
                 disabled={loadingAction === "return"}
               >
                 {loadingAction === "return" ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={20} className="w-5 h-5 animate-spin" />
                     Processing Return...
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 size={16} />
+                    <CheckCircle2 size={20} className="w-5 h-5" />
                     Return Book
                   </>
                 )}

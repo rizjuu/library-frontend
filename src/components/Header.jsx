@@ -1,28 +1,73 @@
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, Sun, Moon, Menu, ChevronDown } from "lucide-react";
 
-export default function Header() {
+export default function Header({
+  theme = "light",
+  onToggleTheme = () => {},
+  onToggleMobileMenu = () => {},
+}) {
   return (
     <header className="top-header">
-      <div className="header-search">
-        <Search size={16} className="header-search-icon" />
-        <input
-          type="text"
-          className="header-search-input"
-          placeholder="Find any book, author, or barcode..."
-        />
+      <div className="header-left">
+        <button
+          type="button"
+          className="header-mobile-toggle"
+          onClick={onToggleMobileMenu}
+          aria-label="Toggle Mobile Menu"
+        >
+          <Menu size={20} className="w-5 h-5" />
+        </button>
+
+        <div className="header-search">
+          <Search size={20} className="header-search-icon w-5 h-5" />
+          <input
+            type="text"
+            className="header-search-input"
+            placeholder="Search books, patrons, transactions..."
+          />
+        </div>
       </div>
 
       <div className="header-right">
-        <button className="btn-icon-only" aria-label="Notifications">
-          <Bell size={18} />
+        {/* Date and Time Indicator */}
+        <div className="header-clock">
+          <span className="header-clock-date">Sun, Aug 16</span>
+          <span className="header-clock-time">10:50 AM</span>
+        </div>
+
+        {/* Theme Mode Switcher */}
+        <button
+          type="button"
+          className="theme-toggle-btn"
+          onClick={onToggleTheme}
+          title={`Switch to ${theme === "light" ? "Dark" : "Light"} mode`}
+          aria-label="Toggle theme mode"
+        >
+          {theme === "light" ? (
+            <Moon size={20} className="w-5 h-5" />
+          ) : (
+            <Sun size={20} className="w-5 h-5" />
+          )}
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div className="header-avatar">JH</div>
+        {/* Notifications */}
+        <button
+          type="button"
+          className="btn-icon-only"
+          aria-label="Notifications"
+          title="Notifications"
+        >
+          <Bell size={20} className="w-5 h-5" />
+          <span className="notification-badge" />
+        </button>
+
+        {/* User Profile Dropdown */}
+        <div className="header-user-profile" title="Dr. Rosa Aquino (Admin)">
+          <div className="header-avatar">DR</div>
           <div className="header-user-info">
-            <span className="header-user-name">Jeoriz H.</span>
-            <span className="header-user-role">Librarian</span>
+            <span className="header-user-name">Dr. Rosa Aquino</span>
+            <span className="header-user-role">Admin</span>
           </div>
+          <ChevronDown size={16} style={{ color: "var(--text-muted)", marginLeft: "4px" }} />
         </div>
       </div>
     </header>

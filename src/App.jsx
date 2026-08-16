@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
+import "./App.css";
 import api from "./api";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
@@ -9,7 +10,6 @@ import Circulation from "./pages/Circulation";
 import AddBook from "./pages/AddBook";
 import ToastContainer from "./components/ToastContainer";
 import Footer from "./components/Footer";
-import { LayoutDashboard, BookOpen, Repeat, PlusCircle } from "lucide-react";
 
 function App() {
   const [books, setBooks] = useState([]);
@@ -17,6 +17,21 @@ function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [toasts, setToasts] = useState([]);
   const [transactionCount, setTransactionCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Theme Management (Light by default matching UI screenshot, Dark mode support)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("app-theme") || "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("app-theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   const showToast = useCallback((message, type = "info") => {
     const id = Date.now();
@@ -45,6 +60,7 @@ function App() {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
   };
 
   const handleTransactionComplete = () => {
@@ -63,25 +79,36 @@ function App() {
   const availableBooks = books.filter((b) => b.available).length;
   const borrowedBooks = books.filter((b) => !b.available).length;
 
-  const mobileNavItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "books", label: "Books", icon: BookOpen },
-    { id: "circulation", label: "Circulation", icon: Repeat },
-    { id: "add-book", label: "Add", icon: PlusCircle },
-  ];
-
   return (
     <div className="app-shell">
-      {/* Toast notifications */}
+      {/* Toast Notifications */}
       <ToastContainer toasts={toasts} />
 
-      {/* Sidebar (desktop) */}
-      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
+      {/* Backdrop overlay for mobile drawer */}
+      {isMobileMenuOpen && (
+        <div
+          className="mobile-drawer-backdrop"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
 
-      {/* Top header bar */}
-      <Header />
+      {/* Sidebar Navigation */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
 
-      {/* Main content area */}
+      {/* Top Header Bar */}
+      <Header
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onToggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)}
+        onNavigate={handleTabChange}
+      />
+
+      {/* Main Content Area */}
       <main className="main-content">
         <AnimatePresence mode="wait">
           {activeTab === "dashboard" && (
@@ -124,23 +151,6 @@ function App() {
 
         <Footer />
       </main>
-
-      {/* Mobile bottom nav */}
-      <div className="mobile-nav">
-        {mobileNavItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              className={`mobile-nav-btn ${activeTab === item.id ? "active" : ""}`}
-              onClick={() => handleTabChange(item.id)}
-            >
-              <Icon size={20} />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

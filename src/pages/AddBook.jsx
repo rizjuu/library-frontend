@@ -9,7 +9,7 @@ function AddBook({ onBookAdded, showToast }) {
     title: "",
     author: "",
     category: "",
-    shelf: ""
+    shelf: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +17,7 @@ function AddBook({ onBookAdded, showToast }) {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -27,7 +27,7 @@ function AddBook({ onBookAdded, showToast }) {
       title: "",
       author: "",
       category: "",
-      shelf: ""
+      shelf: "",
     });
   };
 
@@ -48,7 +48,7 @@ function AddBook({ onBookAdded, showToast }) {
         author: formData.author.trim(),
         category: formData.category.trim() || "General",
         shelf: formData.shelf.trim() || "General",
-        available: true
+        available: true,
       };
 
       const response = await api.post("/books", payload);
@@ -73,25 +73,25 @@ function AddBook({ onBookAdded, showToast }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.3, cubicBezier: [0.16, 1, 0.3, 1] }}
     >
       <div className="page-title-row">
         <div>
-          <h2 className="page-title">Add New Book</h2>
-          <p className="page-subtitle">Add a new book to the library catalog.</p>
+          <h1 className="page-title">Add New Book</h1>
+          <p className="page-subtitle">Register a new book into the library collection.</p>
         </div>
       </div>
 
       <div className="addbook-wrapper">
-        <div className="addbook-card glass-card">
+        <div className="addbook-card">
           <form onSubmit={handleSubmit}>
             <div className="form-grid-2col">
               {/* Barcode */}
               <div className="form-group">
                 <label className="form-label" htmlFor="barcode">
-                  <Barcode size={14} />
+                  <Barcode size={16} className="w-4 h-4" />
                   Barcode
                 </label>
                 <input
@@ -109,7 +109,7 @@ function AddBook({ onBookAdded, showToast }) {
               {/* Title */}
               <div className="form-group">
                 <label className="form-label" htmlFor="title">
-                  <Book size={14} />
+                  <Book size={16} className="w-4 h-4" />
                   Title
                 </label>
                 <input
@@ -127,7 +127,7 @@ function AddBook({ onBookAdded, showToast }) {
               {/* Author */}
               <div className="form-group">
                 <label className="form-label" htmlFor="author">
-                  <User size={14} />
+                  <User size={16} className="w-4 h-4" />
                   Author
                 </label>
                 <input
@@ -145,7 +145,7 @@ function AddBook({ onBookAdded, showToast }) {
               {/* Category */}
               <div className="form-group">
                 <label className="form-label" htmlFor="category">
-                  <Tag size={14} />
+                  <Tag size={16} className="w-4 h-4" />
                   Category
                 </label>
                 <input
@@ -160,10 +160,10 @@ function AddBook({ onBookAdded, showToast }) {
               </div>
             </div>
 
-            {/* Shelf (Full Width) */}
+            {/* Shelf Location */}
             <div className="form-group">
               <label className="form-label" htmlFor="shelf">
-                <Layers size={14} />
+                <Layers size={16} className="w-4 h-4" />
                 Shelf Location
               </label>
               <input
@@ -186,12 +186,12 @@ function AddBook({ onBookAdded, showToast }) {
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={20} className="w-5 h-5 animate-spin" />
                     Adding Book...
                   </>
                 ) : (
                   <>
-                    <Plus size={16} />
+                    <Plus size={20} className="w-5 h-5" />
                     Add Book
                   </>
                 )}
@@ -199,11 +199,11 @@ function AddBook({ onBookAdded, showToast }) {
 
               <button
                 type="button"
-                className="btn btn-outline"
+                className="btn btn-secondary"
                 onClick={handleClear}
                 disabled={loading}
               >
-                <RotateCcw size={16} />
+                <RotateCcw size={20} className="w-5 h-5" />
                 Clear
               </button>
             </div>
