@@ -155,15 +155,42 @@ function Landing() {
           <p><strong>Monday – Friday:</strong> 8:00 AM – 5:00 PM</p>
           <p><strong>Saturday – Sunday:</strong> Closed</p>
           <p><strong>Public Holidays:</strong> Closed</p>
+          <div style={{ marginTop: "1.5rem", borderTop: "1px solid #334155", paddingTop: "1rem" }}>
+            <p><strong>📞 Contact:</strong> (088) 856-1234</p>
+            <p><strong>✉️ Email:</strong> library@misamisoriental.gov.ph</p>
+          </div>
         </div>
 
-        <div className="info-card">
-          <h3>📍 Location & Contact</h3>
-          <p><strong>Address:</strong> Provincial Capitol Compound, Cagayan de Oro City, Misamis Oriental</p>
-          <p><strong>Email:</strong> library@misamisoriental.gov.ph</p>
-          <p><strong>Phone:</strong> (088) 856-1234</p>
+        <div className="info-card map-card">
+          <div className="map-header">
+            <h3>📍 Location & Map Preview</h3>
+            <a
+              href="https://www.google.com/maps/place/PROVINCIAL+LIBRARY/@8.484496,124.6441278,17z/data=!4m10!1m2!2m1!1smisamis+oriental+provincial+library!3m6!1s0x32fff2dc40f3d94b:0xe5ddb14891de208b!8m2!3d8.4845139!4d124.6486059!15sCiNtaXNhbWlzIG9yaWVudGFsIHByb3ZpbmNpYWwgbGlicmFyeZIBEWdvdmVybm1lbnRfb2ZmaWNl4AEA!16s%2Fg%2F1pzph3c94?entry=ttu"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="open-map-link"
+            >
+              Open in Google Maps ↗
+            </a>
+          </div>
+          <p className="map-address">
+            Provincial Capitol Compound, Velez St., Cagayan de Oro City, Misamis Oriental
+          </p>
+          <div className="map-iframe-wrapper">
+            <iframe
+              title="Misamis Oriental Provincial Library Google Map Location"
+              src="https://maps.google.com/maps?q=8.4845139,124.6486059+(Provincial+Library+Misamis+Oriental)&t=&z=17&ie=UTF8&iwloc=B&output=embed"
+              width="100%"
+              height="260"
+              style={{ border: 0, borderRadius: "10px" }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
         </div>
       </section>
+
 
       {/* FOOTER */}
       <footer className="landing-footer">

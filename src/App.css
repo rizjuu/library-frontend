@@ -1320,11 +1320,13 @@
     grid-template-areas:
       "header"
       "main";
+    width: 100vw;
+    overflow-x: hidden;
   }
 
   .sidebar {
     transform: translateX(-100%);
-    width: 260px;
+    width: 270px;
   }
 
   .sidebar.mobile-open {
@@ -1338,10 +1340,11 @@
   .top-header {
     margin-left: 0;
     padding: 0 16px;
+    width: 100%;
   }
 
   .header-search {
-    width: 180px;
+    width: 160px;
   }
 
   .header-clock {
@@ -1350,12 +1353,93 @@
 
   .main-content {
     margin-left: 0;
-    padding: 20px 16px;
+    padding: 18px 14px;
+    width: 100%;
+    overflow-x: hidden;
   }
 
   .stats-grid { grid-template-columns: 1fr; }
   .book-grid { grid-template-columns: 1fr; }
   .form-grid-2col { grid-template-columns: 1fr; }
-  .catalog-toolbar { flex-direction: column; align-items: stretch; }
+  .catalog-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
   .toolbar-search { min-width: 100%; }
+
+  .table-responsive,
+  .data-table-container,
+  .table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 12px;
+  }
+}
+
+/* Mobile Phones (480px and below) */
+@media (max-width: 480px) {
+  .top-header {
+    padding: 0 12px;
+    height: 58px;
+    gap: 8px;
+  }
+
+  .header-search {
+    display: none;
+  }
+
+  .header-user-btn {
+    padding: 4px 6px;
+  }
+
+  .header-user-text {
+    display: none;
+  }
+
+  .main-content {
+    padding: 14px 10px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .card-panel {
+    padding: 14px 12px;
+    border-radius: var(--radius-lg);
+  }
+
+  .circ-action-tabs {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .circ-tab-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .catalog-filters {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .catalog-filter-chip {
+    padding: 5px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .app-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+    margin-top: 28px;
+  }
 }
