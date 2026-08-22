@@ -30,8 +30,8 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [devMagicLink, setDevMagicLink] = useState("");
   const [loading, setLoading] = useState(false);
+
 
   const handlePasswordLogin = async (e, expectedRole) => {
     e.preventDefault();
@@ -76,7 +76,6 @@ function Login() {
     e.preventDefault();
     setError("");
     setSuccessMsg("");
-    setDevMagicLink("");
     setLoading(true);
 
     try {
@@ -86,12 +85,8 @@ function Login() {
 
       setSuccessMsg(
         response.data?.message ||
-        `Magic login link sent to ${email}! Please check your email inbox.`
+        `An email with a login link has been sent to ${email}. Please check your email inbox to log in.`
       );
-
-      if (response.data?.magicLink) {
-        setDevMagicLink(response.data.magicLink);
-      }
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -101,6 +96,7 @@ function Login() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="login-page">
@@ -196,32 +192,11 @@ function Login() {
           {error && <div className="login-error">{error}</div>}
           {successMsg && (
             <div className="login-success">
-              <p>✉️ {successMsg}</p>
-              {devMagicLink && (
-                <div style={{ marginTop: "10px" }}>
-                  <small style={{ display: "block", marginBottom: "5px", color: "#64748b" }}>
-                    [Development Preview Link]:
-                  </small>
-                  <a
-                    href={devMagicLink}
-                    className="direct-link-btn"
-                    style={{
-                      display: "inline-block",
-                      padding: "8px 14px",
-                      backgroundColor: "#2563eb",
-                      color: "#fff",
-                      borderRadius: "6px",
-                      textDecoration: "none",
-                      fontWeight: "bold",
-                      fontSize: "0.85rem"
-                    }}
-                  >
-                    🚀 Open Magic Link & Redirect to Patron/Home
-                  </a>
-                </div>
-              )}
+              <p style={{ margin: 0, fontWeight: "500" }}>✉️ {successMsg}</p>
             </div>
           )}
+
+
 
           {/* PATRON TAB */}
           {mode === "patron" && (
