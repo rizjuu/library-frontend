@@ -126,10 +126,28 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook }) {
           {filteredBooks.map((book) => (
             <div key={book._id || book.barcode} className="book-card">
               <div>
-                <div className="book-card-head">
-                  <div className="book-icon-box">
-                    <BookOpen size={24} className="w-6 h-6" />
-                  </div>
+                <div className="book-card-head" style={{ gap: "12px" }}>
+                  {book.coverUrl ? (
+                    <img
+                      src={book.coverUrl}
+                      alt={book.title}
+                      style={{
+                        width: "48px",
+                        height: "64px",
+                        objectFit: "cover",
+                        borderRadius: "6px",
+                        border: "1px solid var(--border)",
+                        flexShrink: 0,
+                      }}
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="book-icon-box">
+                      <BookOpen size={24} className="w-6 h-6" />
+                    </div>
+                  )}
                   <span className={`status-pill ${book.available ? "active" : "overdue"}`}>
                     <span className="status-pill-dot" />
                     {book.available ? "Available" : "Borrowed"}
@@ -137,7 +155,7 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook }) {
                 </div>
 
                 <h3 className="book-title">{book.title}</h3>
-                <p className="book-author">by {book.author}</p>
+                <p className="book-author">by {book.author || (Array.isArray(book.authors) ? book.authors.join(", ") : "Unknown")}</p>
               </div>
 
               <div>

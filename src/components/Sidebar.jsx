@@ -3,12 +3,12 @@ import {
   BookOpen,
   Repeat,
   BarChart3,
-  ShieldCheck,
   User,
   QrCode,
   X,
   LogOut,
   Users,
+  CloudDownload,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +40,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
     { id: "books", label: "Catalog", icon: BookOpen },
     { id: "circulation", label: "Circulation", icon: Repeat },
     { id: "add-book", label: "Generate Barcode", icon: QrCode },
+    { id: "import-books", label: "Open Library Import", icon: CloudDownload },
     { id: "reports", label: "Reports", icon: BarChart3 },
   ];
 
@@ -49,7 +50,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
 
   navItems.push({ id: "my-info", label: "My Profile", icon: User });
 
-  const displayName = user?.name || (isAdmin ? "Administrator" : "Library Staff");
+  const displayName = user?.name || (isAdmin ? "Administrator" : isStaff ? "Library Staff" : "User");
   const displayRole = user?.role
     ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
     : "Staff";
@@ -127,7 +128,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
             color: "oklch(0.75 0.03 255)",
             cursor: "pointer",
             padding: "6px",
-            borderRadius: "var(--radius-md, 6px)",
+            borderRadius: "6px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

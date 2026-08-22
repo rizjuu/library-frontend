@@ -5,13 +5,14 @@ import Dashboard from "../components/Dashboard";
 import Catalog from "./Catalog";
 import Circulation from "./Circulation";
 import AddBook from "./AddBook";
+import ImportBooks from "./ImportBooks";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
-import { Users, BookOpen, Repeat, Search, ShieldCheck } from "lucide-react";
+import { Users } from "lucide-react";
 
 function StaffDashboard() {
-  const { user, theme, toggleTheme } = useAuth();
+  const { theme, toggleTheme } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [books, setBooks] = useState([]);
@@ -117,6 +118,15 @@ function StaffDashboard() {
               setBooks((prev) => [newBook, ...prev]);
             }}
             showToast={showToast}
+          />
+        )}
+
+        {activeTab === "import-books" && (
+          <ImportBooks
+            showToast={showToast}
+            onBookImported={() => {
+              fetchBooks();
+            }}
           />
         )}
 

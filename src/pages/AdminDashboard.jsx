@@ -5,10 +5,11 @@ import Dashboard from "../components/Dashboard";
 import Catalog from "./Catalog";
 import Circulation from "./Circulation";
 import AddBook from "./AddBook";
+import ImportBooks from "./ImportBooks";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
-import { Users, Shield, BookOpen, BarChart3, Search, Filter } from "lucide-react";
+import { Users, Shield, BookOpen, BarChart3 } from "lucide-react";
 
 function AdminDashboard() {
   const { theme, toggleTheme } = useAuth();
@@ -120,6 +121,15 @@ function AdminDashboard() {
               setBooks((prev) => [newBook, ...prev]);
             }}
             showToast={showToast}
+          />
+        )}
+
+        {activeTab === "import-books" && (
+          <ImportBooks
+            showToast={showToast}
+            onBookImported={() => {
+              fetchBooks();
+            }}
           />
         )}
 
