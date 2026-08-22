@@ -25,7 +25,11 @@ function Landing() {
       {/* HEADER / NAVIGATION */}
       <header className="landing-header">
         <div className="landing-brand">
-          <span className="brand-logo-icon">📚</span>
+          <img
+            src="/logo.png"
+            alt="Misamis Oriental Provincial Capitol Public Library logo"
+            className="brand-logo-icon"
+          />
           <div className="brand-text">
             <span className="brand-sub">MISAMIS ORIENTAL</span>
             <span className="brand-title">Provincial Capitol Public Library</span>

@@ -33,7 +33,10 @@
 }
 
 .brand-logo-icon {
-  font-size: 2.2rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
@@ -468,7 +471,8 @@
   }
 
   .brand-logo-icon {
-    font-size: 1.8rem;
+    width: 40px;
+    height: 40px;
   }
 
   .brand-sub {

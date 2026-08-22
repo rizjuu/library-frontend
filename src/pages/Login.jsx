@@ -98,7 +98,11 @@ function Login() {
       <div className="login-left">
         <Link to="/" className="library-brand-link">
           <div className="library-brand">
-            <div className="brand-icon">📚</div>
+            <img
+              src="/logo.png"
+              alt="Misamis Oriental Provincial Capitol Public Library logo"
+              className="brand-icon"
+            />
             <div>
               <small>MISAMIS ORIENTAL</small>
               <strong>Provincial Capitol Public Library</strong>

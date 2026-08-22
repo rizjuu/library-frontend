@@ -135,7 +135,7 @@ function PatronDashboard() {
       <aside className={`sidebar ${mobileSidebarOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-header-brand">
           <div className="sidebar-logo-icon" title="MOPL Library System">
-            <Library size={22} />
+            <img src="/logo.png" alt="MOPL Library System logo" />
           </div>
           <div className="sidebar-brand-text">
             <span className="sidebar-brand-title">MOPL</span>

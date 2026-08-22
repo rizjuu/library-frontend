@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   User,
   QrCode,
-  Library,
   X,
   LogOut,
   Users,
@@ -60,7 +59,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
       {/* Brand Header */}
       <div className="sidebar-header-brand">
         <div className="sidebar-logo-icon" title="MOPL Library System">
-          <Library size={22} className="w-5 h-5" />
+          <img src="/logo.png" alt="MOPL Library System logo" />
         </div>
         <div className="sidebar-brand-text">
           <span className="sidebar-brand-title">MOPL</span>

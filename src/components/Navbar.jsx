@@ -1,4 +1,4 @@
-import { LayoutDashboard, BookOpen, Repeat, PlusCircle, Library } from "lucide-react";
+import { LayoutDashboard, BookOpen, Repeat, PlusCircle } from "lucide-react";
 
 function Navbar({ activeTab, onTabChange }) {
   const navItems = [
@@ -13,7 +13,7 @@ function Navbar({ activeTab, onTabChange }) {
       <div className="navbar-container">
         <a href="#dashboard" className="navbar-brand" onClick={(e) => { e.preventDefault(); onTabChange("dashboard"); }}>
           <div className="navbar-brand-icon">
-            <Library size={18} />
+            <img src="/logo.png" alt="Library Hub logo" />
           </div>
           <span>Library Hub</span>
         </a>
