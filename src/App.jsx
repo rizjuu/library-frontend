@@ -7,7 +7,9 @@ import {
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import VerifyPatron from "./pages/VerifyPatron";
 import AdminDashboard from "./pages/AdminDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import PatronDashboard from "./pages/PatronDashboard";
@@ -17,11 +19,16 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+          {/* Landing Page seen FIRST before login page */}
+          <Route path="/" element={<Landing />} />
 
+          {/* Login Page with Admin, Staff, and Patron Email tabs */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Patron Email Magic Link Verification Page */}
+          <Route path="/verify-patron" element={<VerifyPatron />} />
+
+          {/* Protected Admin Dashboard */}
           <Route
             path="/admin"
             element={
@@ -31,6 +38,7 @@ function App() {
             }
           />
 
+          {/* Protected Staff Dashboard */}
           <Route
             path="/staff"
             element={
@@ -40,6 +48,7 @@ function App() {
             }
           />
 
+          {/* Protected Patron Dashboard / Home */}
           <Route
             path="/patron"
             element={
@@ -49,15 +58,8 @@ function App() {
             }
           />
 
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to="/login"
-                replace
-              />
-            }
-          />
+          {/* Catch-all redirect to Landing Page */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
