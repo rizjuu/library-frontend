@@ -142,7 +142,7 @@ export default function Landing() {
           <a href="#location" className="nav-link-item">Location &amp; Hours</a>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div className="landing-header-actions">
           <div className="header-status-badge">
             <span className="ping-dot"></span>
             Library is Open: 8:00 AM - 5:00 PM

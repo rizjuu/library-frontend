@@ -30,6 +30,14 @@
   justify-content: space-between;
   padding: 0 2rem;
   width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
 }
 
 .landing-brand {
@@ -156,6 +164,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .nav-btn-signin:hover {
@@ -879,8 +888,24 @@
   color: #64748b;
 }
 
+.toolbar-search {
+  max-width: 100%;
+}
+
+.toolbar-search-input {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
+  .landing-header {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .landing-nav-links { gap: 1rem; }
+  .header-status-badge { display: none; }
   .hero-wrapper { grid-template-columns: 1fr; }
   .stats-grid-container { grid-template-columns: repeat(3, 1fr); }
   .picture-frames-grid { grid-template-columns: repeat(2, 1fr); }
@@ -890,10 +915,149 @@
 }
 
 @media (max-width: 768px) {
-  .landing-header { padding: 0 1rem; }
+  .landing-header {
+    height: 72px;
+    padding: 0 1rem;
+  }
+
+  .landing-brand {
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .brand-logo-box {
+    width: 40px;
+    height: 40px;
+  }
+
+  .brand-sub {
+    font-size: 0.58rem;
+    letter-spacing: 1.5px;
+  }
+
+  .brand-title {
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
   .landing-nav-links { display: none; }
+  .landing-header-actions {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .nav-btn-signin {
+    max-width: 132px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 9px 12px;
+    font-size: 0.72rem;
+  }
+
+  .hero-section {
+    padding-top: 108px;
+    padding-bottom: 44px;
+  }
+
+  .hero-wrapper,
+  .stats-grid-container,
+  .picture-frames-grid,
+  .facilities-grid,
+  .location-wrapper,
+  .footer-inner {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .hero-wrapper { gap: 2rem; }
+
+  .hero-title-main {
+    font-size: clamp(2rem, 10vw, 2.7rem);
+    letter-spacing: -0.5px;
+  }
+
+  .hero-desc-main { font-size: 0.96rem; }
+  .hero-visual-img { height: 280px; }
+  .hero-visual-overlay { padding: 16px; }
+
+  .btn-cta-primary,
+  .btn-cta-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .directory-section,
+  .gallery-section,
+  .facilities-section,
+  .location-section {
+    padding-top: 52px;
+    padding-bottom: 52px;
+  }
+
+  .section-header-block {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-bottom: 28px;
+  }
+
+  .section-main-title {
+    font-size: clamp(2rem, 9vw, 2.5rem);
+  }
+
+  .toolbar-search { width: 100% !important; }
   .picture-frames-grid { grid-template-columns: 1fr; }
   .stats-grid-container { grid-template-columns: 1fr; }
-  .lightbox-image-stage { height: 360px; }
-  .lightbox-nav-btn { width: 42px; height: 42px; }
+  .picture-frames-grid,
+  .facilities-grid { gap: 16px; }
+  .picture-frame-img-box { height: 210px; }
+  .picture-frame-caption-bar { padding: 14px 16px; gap: 12px; }
+
+  .picture-frame-sub,
+  .facility-desc,
+  .info-row-text p,
+  .footer-col p,
+  .footer-col-brand p { overflow-wrap: anywhere; }
+
+  .facility-card { padding: 22px; }
+  .info-row-item { padding: 16px; gap: 12px; }
+  .map-container-frame { height: 280px; }
+
+  .lightbox-modal-backdrop { padding: 12px; }
+  .lightbox-modal-header,
+  .lightbox-modal-footer { padding: 14px 16px; }
+  .lightbox-image-stage { height: 280px; }
+  .lightbox-modal-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .lightbox-nav-btn.prev { left: 10px; }
+  .lightbox-nav-btn.next { right: 10px; }
+
+  .footer-inner { gap: 2rem; }
+  .footer-bottom-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .brand-title {
+    max-width: 132px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-btn-signin {
+    max-width: 96px;
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .hero-eyebrow-pill { letter-spacing: 1px; }
+  .hero-visual-badge { gap: 10px; }
+  .hero-visual-badge > div:last-child { min-width: 0; }
 }
