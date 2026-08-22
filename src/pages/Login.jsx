@@ -29,14 +29,11 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
-
 
   const handlePasswordLogin = async (e, expectedRole) => {
     e.preventDefault();
     setError("");
-    setSuccessMsg("");
     setLoading(true);
 
     try {
@@ -75,28 +72,25 @@ function Login() {
   const handlePatronEmailLogin = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccessMsg("");
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/patron-request-link", {
+      const response = await api.post("/auth/patron-login", {
         email
       });
 
-      setSuccessMsg(
-        response.data?.message ||
-        `An email with a login link has been sent to ${email}. Please check your email inbox to log in.`
-      );
+      const { token, user: loggedUser } = response.data;
+      login(loggedUser, token, true);
+      navigate("/patron", { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.message ||
-        "Failed to send email login link. Please check your email address."
+        "Failed to sign in. Please check your email address."
       );
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="login-page">
@@ -162,7 +156,6 @@ function Login() {
               onClick={() => {
                 setMode("patron");
                 setError("");
-                setSuccessMsg("");
               }}
             >
               Patron (Email)
@@ -172,7 +165,6 @@ function Login() {
               onClick={() => {
                 setMode("staff");
                 setError("");
-                setSuccessMsg("");
               }}
             >
               Staff
@@ -182,7 +174,6 @@ function Login() {
               onClick={() => {
                 setMode("admin");
                 setError("");
-                setSuccessMsg("");
               }}
             >
               Admin
@@ -190,13 +181,6 @@ function Login() {
           </div>
 
           {error && <div className="login-error">{error}</div>}
-          {successMsg && (
-            <div className="login-success">
-              <p style={{ margin: 0, fontWeight: "500" }}>✉️ {successMsg}</p>
-            </div>
-          )}
-
-
 
           {/* PATRON TAB */}
           {mode === "patron" && (
@@ -210,7 +194,7 @@ function Login() {
                 required
               />
               <p className="field-hint">
-                Enter your email address. We will send a secure login link directly to your email inbox. New emails will be saved automatically.
+                Enter your email address to sign in directly. A confirmation notification will be sent to your email inbox.
               </p>
 
               <button
@@ -218,7 +202,7 @@ function Login() {
                 className="signin-button patron-button"
                 disabled={loading}
               >
-                {loading ? "Sending Email Link..." : "Send Email Login Link ✉️"}
+                {loading ? "Signing in..." : "Sign in as Patron"}
               </button>
             </form>
           )}
