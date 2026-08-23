@@ -27,7 +27,7 @@ export default function ImportBooks({ showToast, onBookImported }) {
   const [existingKeys, setExistingKeys] = useState(new Set());
   const [existingTitles, setExistingTitles] = useState(new Set());
 
-  // Pre-fetch existing MongoDB catalog books to check for openLibraryKey & title duplicates
+  // Pre-fetch existing catalog books to check for openLibraryKey & title duplicates
   const fetchExistingBooks = async () => {
     try {
       const res = await api.get("/books");
@@ -73,7 +73,7 @@ export default function ImportBooks({ showToast, onBookImported }) {
       const searchResults = response.data.books || [];
       setBooks(searchResults);
 
-      // Pre-mark any books that already exist in MongoDB
+      // Pre-mark any books that already exist in the catalog
       const initialStatusMap = {};
       searchResults.forEach((b, idx) => {
         const itemKey = b.openLibraryKey || `${b.title}-${idx}`;

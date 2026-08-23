@@ -9,7 +9,6 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import VerifyPatron from "./pages/VerifyPatron";
 import AdminDashboard from "./pages/AdminDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import PatronDashboard from "./pages/PatronDashboard";
@@ -22,11 +21,8 @@ function App() {
           {/* Landing Page seen FIRST before login page */}
           <Route path="/" element={<Landing />} />
 
-          {/* Login Page with Admin, Staff, and Patron Email tabs */}
+          {/* Login Page with Admin, Staff, and Patron Gmail tabs */}
           <Route path="/login" element={<Login />} />
-
-          {/* Patron Email Magic Link Verification Page */}
-          <Route path="/verify-patron" element={<VerifyPatron />} />
 
           {/* Protected Admin Dashboard */}
           <Route

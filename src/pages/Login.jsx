@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import "./Login.css";
@@ -25,7 +26,6 @@ function Login() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
@@ -69,14 +69,13 @@ function Login() {
     }
   };
 
-  const handlePatronEmailLogin = async (e) => {
-    e.preventDefault();
+  const handleGoogleSuccess = async (credentialResponse) => {
     setError("");
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/patron-login", {
-        email
+      const response = await api.post("/auth/google-login", {
+        credential: credentialResponse.credential
       });
 
       const { token, user: loggedUser } = response.data;
@@ -85,11 +84,15 @@ function Login() {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-        "Failed to sign in. Please check your email address."
+        "Google sign-in failed. Please try again."
       );
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign-in was cancelled or failed. Please try again.");
   };
 
   return (
@@ -133,7 +136,7 @@ function Login() {
           </div>
           <div className="feature-card">
             <span>✉️</span>
-            <strong>Email Login</strong>
+            <strong>Gmail Login</strong>
           </div>
         </div>
 
@@ -162,7 +165,7 @@ function Login() {
                 setError("");
               }}
             >
-              Patron (Email)
+              Patron (Gmail)
             </button>
             <button
               className={mode === "staff" ? "active" : ""}
@@ -186,29 +189,40 @@ function Login() {
 
           {error && <div className="login-error">{error}</div>}
 
-          {/* PATRON TAB */}
+          {/* PATRON TAB — Google OAuth */}
           {mode === "patron" && (
-            <form onSubmit={handlePatronEmailLogin}>
-              <label>Patron Email Address</label>
-              <input
-                type="email"
-                placeholder="patron@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <p className="field-hint">
-                Enter your email address to sign in directly. A confirmation notification will be sent to your email inbox.
-              </p>
+            <div className="patron-google-section">
+              <div className="google-intro">
+                <div className="google-intro-icon">📚</div>
+                <h3>Welcome, Patron!</h3>
+                <p>
+                  Sign in with your Gmail account to access the library catalog,
+                  check book availability, and manage your borrowing history.
+                </p>
+              </div>
 
-              <button
-                type="submit"
-                className="signin-button patron-button"
-                disabled={loading}
-              >
-                {loading ? "Signing in..." : "Sign in as Patron"}
-              </button>
-            </form>
+              <div className="google-button-wrapper">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  size="large"
+                  width="380"
+                  text="continue_with"
+                  shape="rectangular"
+                  logo_alignment="left"
+                  theme="outline"
+                />
+              </div>
+
+              {loading && (
+                <p className="google-loading-text">Signing you in...</p>
+              )}
+
+              <p className="field-hint" style={{ textAlign: "center", marginTop: "16px" }}>
+                Your Gmail account will be used to create your patron profile automatically.
+                No password needed.
+              </p>
+            </div>
           )}
 
           {/* STAFF TAB */}

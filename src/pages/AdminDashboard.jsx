@@ -9,7 +9,7 @@ import ImportBooks from "./ImportBooks";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
-import { Users, Shield, BookOpen, BarChart3 } from "lucide-react";
+import { Users, Shield, BookOpen, BarChart3, Loader2 } from "lucide-react";
 
 function AdminDashboard() {
   const { theme, toggleTheme } = useAuth();
@@ -19,6 +19,24 @@ function AdminDashboard() {
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [toasts, setToasts] = useState([]);
 
+  // Live Dashboard Stats State
+  const [dashboardStats, setDashboardStats] = useState({
+    totalBooks: 0,
+    availableBooks: 0,
+    borrowedBooks: 0,
+    overdueBooks: 0,
+    totalUsers: 0,
+    totalPatrons: 0,
+    totalStaff: 0,
+    recentTransactions: [],
+    announcements: []
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // Live System Users State
+  const [liveUsers, setLiveUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
   // Toast Helper
   const showToast = (message, type = "info") => {
     const id = Date.now();
@@ -26,6 +44,28 @@ function AdminDashboard() {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
+  };
+
+  const fetchDashboardStats = async () => {
+    setLoadingStats(true);
+    try {
+      const res = await api.get("/dashboard/stats");
+      setDashboardStats({
+        totalBooks: res.data.totalBooks || 0,
+        availableBooks: res.data.availableBooks || 0,
+        borrowedBooks: res.data.borrowedBooks || 0,
+        overdueBooks: res.data.overdueBooks || 0,
+        totalUsers: res.data.totalUsers || 0,
+        totalPatrons: res.data.totalPatrons || 0,
+        totalStaff: res.data.totalStaff || 0,
+        recentTransactions: res.data.recentTransactions || [],
+        announcements: res.data.announcements || []
+      });
+    } catch (err) {
+      console.error("Failed to load dashboard stats:", err);
+    } finally {
+      setLoadingStats(false);
+    }
   };
 
   const fetchBooks = async () => {
@@ -40,22 +80,29 @@ function AdminDashboard() {
     }
   };
 
+  const fetchLiveUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const res = await api.get("/auth/users");
+      setLiveUsers(res.data || []);
+    } catch (err) {
+      console.error("Failed to load live users:", err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
   useEffect(() => {
+    fetchDashboardStats();
     fetchBooks();
+    fetchLiveUsers();
   }, []);
 
-  const totalBooks = books.length;
-  const availableBooks = books.filter((b) => b.available !== false).length;
-  const borrowedBooks = books.filter((b) => b.available === false).length;
-
-  // Sample Users Data for Admin User Management
-  const sampleUsers = [
-    { id: "U-101", name: "Administrator", username: "admin", role: "admin", email: "admin@library.gov.ph", status: "Active" },
-    { id: "U-102", name: "Sarah Jenkins", username: "staff_sarah", role: "staff", email: "sarah.j@library.gov.ph", status: "Active" },
-    { id: "U-103", name: "Mark Vance", username: "staff_mark", role: "staff", email: "mark.v@library.gov.ph", status: "Active" },
-    { id: "U-104", name: "Maria Santos", username: "patron_maria", role: "patron", email: "maria.santos@email.com", status: "Active" },
-    { id: "U-105", name: "Juan Dela Cruz", username: "patron_juan", role: "patron", email: "juan.delacruz@email.com", status: "Active" },
-  ];
+  const handleRefreshAll = () => {
+    fetchDashboardStats();
+    fetchBooks();
+    fetchLiveUsers();
+  };
 
   return (
     <div className="app-shell">
@@ -92,11 +139,18 @@ function AdminDashboard() {
       <main className="main-content">
         {activeTab === "dashboard" && (
           <Dashboard
-            totalBooks={totalBooks}
-            availableBooks={availableBooks}
-            borrowedBooks={borrowedBooks}
-            books={books}
+            totalBooks={dashboardStats.totalBooks}
+            availableBooks={dashboardStats.availableBooks}
+            borrowedBooks={dashboardStats.borrowedBooks}
+            overdueBooks={dashboardStats.overdueBooks}
+            totalUsers={dashboardStats.totalUsers}
+            totalPatrons={dashboardStats.totalPatrons}
+            recentTransactions={dashboardStats.recentTransactions}
+            announcements={dashboardStats.announcements}
+            loading={loadingStats}
             onNavigate={(tab) => setActiveTab(tab)}
+            onRefreshData={handleRefreshAll}
+            showToast={showToast}
           />
         )}
 
@@ -110,15 +164,17 @@ function AdminDashboard() {
 
         {activeTab === "circulation" && (
           <Circulation
-            onTransactionComplete={fetchBooks}
+            onTransactionComplete={() => {
+              handleRefreshAll();
+            }}
             showToast={showToast}
           />
         )}
 
         {activeTab === "add-book" && (
           <AddBook
-            onBookAdded={(newBook) => {
-              setBooks((prev) => [newBook, ...prev]);
+            onBookAdded={() => {
+              handleRefreshAll();
             }}
             showToast={showToast}
           />
@@ -128,7 +184,7 @@ function AdminDashboard() {
           <ImportBooks
             showToast={showToast}
             onBookImported={() => {
-              fetchBooks();
+              handleRefreshAll();
             }}
           />
         )}
@@ -142,7 +198,7 @@ function AdminDashboard() {
                   User &amp; Role Management
                 </h1>
                 <p className="page-subtitle">
-                  Manage library system administrators, staff members, and registered patrons.
+                  Live registered administrators, staff members, and patrons.
                 </p>
               </div>
             </div>
@@ -150,27 +206,31 @@ function AdminDashboard() {
             <div className="stats-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
               <div className="stat-card primary">
                 <div className="stat-card-top">
-                  <span className="stat-label">TOTAL USERS</span>
+                  <span className="stat-label">TOTAL REGISTERED USERS</span>
                   <div className="stat-icon-box primary">
                     <Users size={24} />
                   </div>
                 </div>
                 <div className="stat-card-body">
-                  <div className="stat-number">{sampleUsers.length}</div>
-                  <div className="stat-change up"><span>Active system accounts</span></div>
+                  <div className="stat-number">
+                    {loadingUsers ? <Loader2 size={24} className="animate-spin" /> : liveUsers.length}
+                  </div>
+                  <div className="stat-change up"><span>Active user accounts</span></div>
                 </div>
               </div>
 
               <div className="stat-card info">
                 <div className="stat-card-top">
-                  <span className="stat-label">STAFF MEMBERS</span>
+                  <span className="stat-label">STAFF &amp; ADMINS</span>
                   <div className="stat-icon-box info">
                     <Shield size={24} />
                   </div>
                 </div>
                 <div className="stat-card-body">
-                  <div className="stat-number">2</div>
-                  <div className="stat-change neutral"><span>Library Operators</span></div>
+                  <div className="stat-number">
+                    {liveUsers.filter((u) => u.role === "admin" || u.role === "staff").length}
+                  </div>
+                  <div className="stat-change neutral"><span>System Operators</span></div>
                 </div>
               </div>
 
@@ -182,7 +242,9 @@ function AdminDashboard() {
                   </div>
                 </div>
                 <div className="stat-card-body">
-                  <div className="stat-number">2</div>
+                  <div className="stat-number">
+                    {liveUsers.filter((u) => u.role === "patron").length}
+                  </div>
                   <div className="stat-change up"><span>Cardholders</span></div>
                 </div>
               </div>
@@ -190,130 +252,61 @@ function AdminDashboard() {
 
             <div className="recent-transactions-card">
               <div className="card-header-row">
-                <h3 className="card-header-title">System User Directory</h3>
+                <h3 className="card-header-title">Live User Directory</h3>
               </div>
 
               <div className="table-container">
                 <table className="ui-table">
                   <thead>
                     <tr>
-                      <th>USER ID</th>
+                      <th>ID</th>
                       <th>NAME</th>
                       <th>USERNAME / EMAIL</th>
                       <th>ROLE</th>
-                      <th>STATUS</th>
+                      <th>CREATED DATE</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sampleUsers.map((u) => (
-                      <tr key={u.id}>
-                        <td><span className="id-chip">{u.id}</span></td>
-                        <td className="patron-cell">{u.name}</td>
-                        <td className="book-title-cell">{u.email}</td>
-                        <td>
-                          <span
-                            className={`status-pill ${
-                              u.role === "admin" ? "active" : u.role === "staff" ? "returned" : "active"
-                            }`}
-                          >
-                            <span className="status-pill-dot" />
-                            {u.role.toUpperCase()}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="status-pill active">
-                            <span className="status-pill-dot" />
-                            {u.status}
-                          </span>
+                    {liveUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: "center", padding: "20px", color: "var(--text-muted)" }}>
+                          {loadingUsers ? "Loading users..." : "No users found."}
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      liveUsers.map((u) => {
+                        const uId = u._id ? `U-${u._id.substring(u._id.length - 4)}` : "U-USER";
+                        const userIdentifier = u.username ? `@${u.username}` : u.email || "—";
+                        const formattedDate = u.createdAt
+                          ? new Date(u.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+                          : "Existing";
+
+                        return (
+                          <tr key={u._id || Math.random()}>
+                            <td><span className="id-chip">{uId}</span></td>
+                            <td className="patron-cell">{u.name || "Library User"}</td>
+                            <td className="book-title-cell">{userIdentifier}</td>
+                            <td>
+                              <span
+                                className={`status-pill ${
+                                  u.role === "admin" ? "active" : u.role === "staff" ? "returned" : "active"
+                                }`}
+                              >
+                                <span className="status-pill-dot" />
+                                {(u.role || "patron").toUpperCase()}
+                              </span>
+                            </td>
+                            <td>{formattedDate}</td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
         )}
-
-        {activeTab === "reports" && (
-          <div className="dashboard-shell">
-            <div className="page-title-row">
-              <div>
-                <h1 className="page-title">
-                  <BarChart3 size={28} style={{ color: "var(--color-primary)" }} />
-                  Library Reports &amp; Analytics
-                </h1>
-                <p className="page-subtitle">Comprehensive statistics on circulation, stock, and collection usage.</p>
-              </div>
-            </div>
-
-            <div className="stats-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-              <div className="stat-card primary">
-                <div className="stat-card-top">
-                  <span className="stat-label">TOTAL CATALOG ITEMS</span>
-                  <div className="stat-icon-box primary"><BookOpen size={24} /></div>
-                </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">{totalBooks}</div>
-                  <div className="stat-change up"><span>100% indexed</span></div>
-                </div>
-              </div>
-
-              <div className="stat-card success">
-                <div className="stat-card-top">
-                  <span className="stat-label">CIRCULATION RATE</span>
-                  <div className="stat-icon-box success"><BarChart3 size={24} /></div>
-                </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">
-                    {totalBooks > 0 ? `${Math.round((borrowedBooks / totalBooks) * 100)}%` : "11%"}
-                  </div>
-                  <div className="stat-change up"><span>Active loans</span></div>
-                </div>
-              </div>
-
-              <div className="stat-card warning">
-                <div className="stat-card-top">
-                  <span className="stat-label">OVERDUE INCIDENTS</span>
-                  <div className="stat-icon-box warning"><BarChart3 size={24} /></div>
-                </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">0</div>
-                  <div className="stat-change neutral"><span>All clear</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "my-info" && (
-          <div className="dashboard-shell">
-            <div className="page-title-row">
-              <div>
-                <h1 className="page-title">Administrator Profile</h1>
-                <p className="page-subtitle">Your account privileges and preferences.</p>
-              </div>
-            </div>
-
-            <div className="addbook-wrapper">
-              <div className="addbook-card">
-                <div className="form-group">
-                  <label className="form-label">Role Privilege</label>
-                  <div className="form-readonly">Administrator (Full Access)</div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Scope</label>
-                  <div className="form-readonly">System Configuration, User Operations, Catalog &amp; Reports</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <footer className="app-footer">
-          <span>Misamis Oriental Provincial Capitol Public Library System</span>
-          <span>Role: Admin | MOPL Engine v2.0</span>
-        </footer>
       </main>
     </div>
   );

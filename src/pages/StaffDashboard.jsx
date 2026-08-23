@@ -19,6 +19,19 @@ function StaffDashboard() {
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [toasts, setToasts] = useState([]);
 
+  // Live Dashboard Stats State
+  const [dashboardStats, setDashboardStats] = useState({
+    totalBooks: 0,
+    availableBooks: 0,
+    borrowedBooks: 0,
+    overdueBooks: 0,
+    totalUsers: 0,
+    totalPatrons: 0,
+    recentTransactions: [],
+    announcements: []
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
   // Toast Helper
   const showToast = (message, type = "info") => {
     const id = Date.now();
@@ -26,6 +39,27 @@ function StaffDashboard() {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
+  };
+
+  const fetchDashboardStats = async () => {
+    setLoadingStats(true);
+    try {
+      const res = await api.get("/dashboard/stats");
+      setDashboardStats({
+        totalBooks: res.data.totalBooks || 0,
+        availableBooks: res.data.availableBooks || 0,
+        borrowedBooks: res.data.borrowedBooks || 0,
+        overdueBooks: res.data.overdueBooks || 0,
+        totalUsers: res.data.totalUsers || 0,
+        totalPatrons: res.data.totalPatrons || 0,
+        recentTransactions: res.data.recentTransactions || [],
+        announcements: res.data.announcements || []
+      });
+    } catch (err) {
+      console.error("Failed to load dashboard stats", err);
+    } finally {
+      setLoadingStats(false);
+    }
   };
 
   const fetchBooks = async () => {
@@ -41,12 +75,14 @@ function StaffDashboard() {
   };
 
   useEffect(() => {
+    fetchDashboardStats();
     fetchBooks();
   }, []);
 
-  const totalBooks = books.length;
-  const availableBooks = books.filter((b) => b.available !== false).length;
-  const borrowedBooks = books.filter((b) => b.available === false).length;
+  const handleRefreshAll = () => {
+    fetchDashboardStats();
+    fetchBooks();
+  };
 
   const samplePatrons = [
     { id: "P-8801", name: "Maria Santos", email: "maria.santos@email.com", activeLoans: 2, status: "Good Standing" },
@@ -89,17 +125,24 @@ function StaffDashboard() {
       <main className="main-content">
         {activeTab === "dashboard" && (
           <Dashboard
-            totalBooks={totalBooks}
-            availableBooks={availableBooks}
-            borrowedBooks={borrowedBooks}
-            books={books}
+            totalBooks={dashboardStats.totalBooks}
+            availableBooks={dashboardStats.availableBooks}
+            borrowedBooks={dashboardStats.borrowedBooks}
+            overdueBooks={dashboardStats.overdueBooks}
+            totalUsers={dashboardStats.totalUsers}
+            totalPatrons={dashboardStats.totalPatrons}
+            recentTransactions={dashboardStats.recentTransactions}
+            announcements={dashboardStats.announcements}
+            loading={loadingStats}
             onNavigate={(tab) => setActiveTab(tab)}
+            onRefreshData={handleRefreshAll}
+            showToast={showToast}
           />
         )}
 
         {activeTab === "circulation" && (
           <Circulation
-            onTransactionComplete={fetchBooks}
+            onTransactionComplete={handleRefreshAll}
             showToast={showToast}
           />
         )}
@@ -114,9 +157,7 @@ function StaffDashboard() {
 
         {activeTab === "add-book" && (
           <AddBook
-            onBookAdded={(newBook) => {
-              setBooks((prev) => [newBook, ...prev]);
-            }}
+            onBookAdded={handleRefreshAll}
             showToast={showToast}
           />
         )}
@@ -124,9 +165,7 @@ function StaffDashboard() {
         {activeTab === "import-books" && (
           <ImportBooks
             showToast={showToast}
-            onBookImported={() => {
-              fetchBooks();
-            }}
+            onBookImported={handleRefreshAll}
           />
         )}
 

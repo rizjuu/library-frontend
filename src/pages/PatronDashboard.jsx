@@ -53,9 +53,22 @@ function PatronDashboard() {
     }
   };
 
+  const [announcements, setAnnouncements] = useState([]);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const res = await api.get("/announcements");
+      setAnnouncements(res.data || []);
+    } catch (err) {
+      console.error("Failed to load announcements for patron", err);
+    }
+  };
+
   useEffect(() => {
     fetchBooks();
+    fetchAnnouncements();
   }, []);
+
 
   const getInitials = (name) => {
     if (!name) return "P";
@@ -366,22 +379,27 @@ function PatronDashboard() {
                   </h3>
                 </div>
 
-                <div className="announcement-item">
-                  <div className="announcement-title">Library Hours Extended</div>
-                  <p className="announcement-desc">
-                    The library is now open until 8:00 PM on weekdays for study and reading.
+                {announcements.length === 0 ? (
+                  <p style={{ color: "var(--text-muted)", fontSize: "13px", textAlign: "center", padding: "16px" }}>
+                    No active library notices.
                   </p>
-                  <span className="announcement-date">2026-08-01</span>
-                </div>
-
-                <div className="announcement-item">
-                  <div className="announcement-title">Digital Library Services</div>
-                  <p className="announcement-desc">
-                    Ask staff at the desk about free SMS alerts for your due dates.
-                  </p>
-                  <span className="announcement-date">2026-08-10</span>
-                </div>
+                ) : (
+                  announcements.map((item) => (
+                    <div key={item._id || item.id} className="announcement-item">
+                      <div className="announcement-title" style={{ fontWeight: "700", color: "var(--text-primary)" }}>
+                        {item.title}
+                      </div>
+                      <p className="announcement-desc" style={{ margin: "4px 0", fontSize: "13px" }}>
+                        {item.content}
+                      </p>
+                      <span className="announcement-date" style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                        📅 {item.date || (item.createdAt ? new Date(item.createdAt).toISOString().split("T")[0] : "Recent")}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
+
             </div>
           </motion.div>
         )}

@@ -8,7 +8,7 @@ function Footer() {
         fontSize: "12px",
       }}
     >
-      Library Management System — Powered by React + Vite + MongoDB
+      Library Management System — Powered by React + Vite
     </div>
   );
 }
