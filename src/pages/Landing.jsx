@@ -27,6 +27,7 @@ export default function Landing() {
   const [activeCategory, setActiveCategory] = useState("everything");
   const [searchQuery, setSearchQuery] = useState("");
   const [previewIndex, setPreviewIndex] = useState(null);
+  const [heroImageIndex, setHeroImageIndex] = useState(0);
 
   const handleGetStarted = () => {
     if (user) {
@@ -42,43 +43,43 @@ export default function Landing() {
     }
   };
 
-  // Gallery Photos Array - ALL picture frames use /library.jpg as requested
+  // Gallery Photos Array
   const galleryPhotos = [
     {
       id: 1,
       title: "Main Reading Hall",
       sub: "Spacious study tables & quiet reading environment",
-      src: "/library.jpg",
+      src: "/mainreadinghall.jpg",
     },
     {
       id: 2,
       title: "Filipiniana Archives",
       sub: "Historical documents & Misamis Oriental regional literature",
-      src: "/library.jpg",
+      src: "/Filipiniana.jpg",
     },
     {
       id: 3,
       title: "Children's Learning Corner",
       sub: "Interactive storybooks & early literacy section",
-      src: "/library.jpg",
+      src: "/kidscorner.jpg",
     },
     {
       id: 4,
       title: "Digital Research Hub",
       sub: "High-speed internet workstations & e-catalog terminals",
-      src: "/library.jpg",
+      src: "/digitalhub.jpg",
     },
     {
       id: 5,
       title: "Quiet Study Alcoves",
       sub: "Individual focus desks for academic research",
-      src: "/library.jpg",
+      src: "/alcoves.jpg",
     },
     {
       id: 6,
       title: "Periodicals & Journals Section",
       sub: "Daily local newspapers & academic publications",
-      src: "/library.jpg",
+      src: "/periodicalsjournal.jpg",
     },
   ];
 
@@ -106,6 +107,14 @@ export default function Landing() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [previewIndex, handlePrevImage, handleNextImage]);
+
+  // Auto-cycle hero image every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeroImageIndex((prev) => (prev + 1) % galleryPhotos.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [galleryPhotos.length]);
 
   const categories = [
     { id: "everything", label: "Everything" },
@@ -198,21 +207,21 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Featured Visual Frame with library.jpg */}
+          {/* Featured Visual Frame with auto-cycle */}
           <div className="hero-visual-frame">
             <img
-              src="/library.jpg"
-              alt="Misamis Oriental Provincial Capitol Public Library"
+              src={galleryPhotos[heroImageIndex].src}
+              alt={galleryPhotos[heroImageIndex].title}
               className="hero-visual-img"
             />
             <div className="hero-visual-overlay">
               <div className="hero-visual-badge">
-                <div className="play-button-icon" onClick={() => setPreviewIndex(0)} title="Click to view gallery">
+                <div className="play-button-icon" onClick={() => setPreviewIndex(heroImageIndex)} title="Click to view full preview">
                   <Play size={20} style={{ marginLeft: "2px" }} />
                 </div>
                 <div>
                   <div style={{ fontSize: "14px", fontWeight: 800 }}>MOPL Library Showcase</div>
-                  <div style={{ fontSize: "11px", color: "#cbd5e1" }}>Public Knowledge Center</div>
+                  <div style={{ fontSize: "11px", color: "#cbd5e1" }}>{galleryPhotos[heroImageIndex].title}</div>
                 </div>
               </div>
             </div>
