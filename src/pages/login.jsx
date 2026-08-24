@@ -3,12 +3,15 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
+import { X } from "lucide-react";
 import "./Login.css";
 
-function Login() {
+function Login({ overlay = false }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, login } = useAuth();
+
+  const closeLogin = () => navigate("/", { replace: true });
 
   const initialTab = searchParams.get("tab") || "patron";
   const [mode, setMode] = useState(initialTab);
@@ -96,9 +99,16 @@ function Login() {
   };
 
   return (
-    <div className="login-page">
-      {/* Left Banner */}
-      <div className="login-left">
+    <div
+      className={`login-page${overlay ? " login-overlay" : ""}`}
+      role={overlay ? "dialog" : undefined}
+      aria-modal={overlay ? "true" : undefined}
+      aria-label={overlay ? "Library sign in" : undefined}
+      onClick={overlay ? closeLogin : undefined}
+    >
+      <div className="login-modal" onClick={(event) => event.stopPropagation()}>
+        {/* Left Banner */}
+        <div className="login-left">
         <Link to="/" className="library-brand-link">
           <div className="library-brand">
             <img
@@ -146,11 +156,22 @@ function Login() {
           </Link>
           © 2026 MOPL · Capstone Project
         </div>
-      </div>
+        </div>
 
-      {/* Right Login Form */}
-      <div className="login-right">
-        <div className="login-container">
+        {/* Right Login Form */}
+        <div className="login-right">
+          {overlay && (
+            <button
+              type="button"
+              className="login-close-button"
+              onClick={closeLogin}
+              aria-label="Close sign in"
+              title="Close sign in"
+            >
+              <X size={20} />
+            </button>
+          )}
+          <div className="login-container">
           <h2>Library Sign In</h2>
           <p className="login-description">
             Select your account type to access the Misamis Oriental Provincial Capitol Public Library System.
@@ -324,6 +345,7 @@ function Login() {
               </button>
             </form>
           )}
+          </div>
         </div>
       </div>
     </div>

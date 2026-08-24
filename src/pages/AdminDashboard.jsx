@@ -129,6 +129,8 @@ function AdminDashboard() {
             totalPatrons={dashboardStats.totalPatrons}
             recentTransactions={dashboardStats.recentTransactions}
             announcements={dashboardStats.announcements}
+            loadingAnnouncements={loadingStats}
+            canManageAnnouncements={true}
             loading={loadingStats}
             onNavigate={(tab) => setActiveTab(tab)}
             onRefreshData={handleRefreshAll}

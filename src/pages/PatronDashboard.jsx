@@ -31,6 +31,8 @@ function PatronDashboard() {
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
@@ -54,8 +56,21 @@ function PatronDashboard() {
     }
   };
 
+  const fetchAnnouncements = async () => {
+    setLoadingAnnouncements(true);
+    try {
+      const res = await api.get("/announcements");
+      setAnnouncements(res.data || []);
+    } catch (err) {
+      console.error("Failed to load announcements", err);
+    } finally {
+      setLoadingAnnouncements(false);
+    }
+  };
+
   useEffect(() => {
     fetchBooks();
+    fetchAnnouncements();
   }, []);
 
   const getInitials = (name) => {
@@ -367,21 +382,21 @@ function PatronDashboard() {
                   </h3>
                 </div>
 
-                <div className="announcement-item">
-                  <div className="announcement-title">Library Hours Extended</div>
-                  <p className="announcement-desc">
-                    The library is now open until 8:00 PM on weekdays for study and reading.
+                {announcements.length === 0 ? (
+                  <p style={{ color: "var(--text-muted)", fontSize: "13px", textAlign: "center", padding: "16px" }}>
+                    {loadingAnnouncements ? "Loading announcements..." : "No active announcements."}
                   </p>
-                  <span className="announcement-date">2026-08-01</span>
-                </div>
-
-                <div className="announcement-item">
-                  <div className="announcement-title">Digital Library Services</div>
-                  <p className="announcement-desc">
-                    Ask staff at the desk about free SMS alerts for your due dates.
-                  </p>
-                  <span className="announcement-date">2026-08-10</span>
-                </div>
+                ) : (
+                  announcements.map((item) => (
+                    <div key={item._id || item.id} className="announcement-item">
+                      <div className="announcement-title">{item.title}</div>
+                      <p className="announcement-desc">{item.content}</p>
+                      <span className="announcement-date">
+                        {item.date || (item.createdAt ? new Date(item.createdAt).toISOString().split("T")[0] : "Recent")}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </motion.div>

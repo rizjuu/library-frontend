@@ -28,6 +28,8 @@ function Dashboard({
   totalPatrons = 0,
   recentTransactions = [],
   announcements = [],
+  canManageAnnouncements = false,
+  loadingAnnouncements = false,
   loading = false,
   onNavigate = () => {},
   onRefreshData = () => {},
@@ -132,14 +134,16 @@ function Dashboard({
             <BookOpen size={18} className="w-5 h-5" />
             Add Book
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setShowAddModal(true)}
-          >
-            <Megaphone size={18} className="w-5 h-5" />
-            Post Announcement
-          </button>
+          {canManageAnnouncements && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowAddModal(true)}
+            >
+              <Megaphone size={18} className="w-5 h-5" />
+              Post Announcement
+            </button>
+          )}
         </div>
       </div>
 
@@ -310,13 +314,15 @@ function Dashboard({
               <Megaphone size={20} className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
               Live Announcements
             </h3>
-            <button
-              type="button"
-              className="btn-link-action"
-              onClick={() => setShowAddModal(!showAddModal)}
-            >
-              + Post New
-            </button>
+            {canManageAnnouncements && (
+              <button
+                type="button"
+                className="btn-link-action"
+                onClick={() => setShowAddModal(!showAddModal)}
+              >
+                + Post New
+              </button>
+            )}
           </div>
 
           {/* Announcement Posting Modal / Form */}
@@ -399,7 +405,7 @@ function Dashboard({
 
           {announcements.length === 0 ? (
             <p style={{ color: "var(--text-muted)", fontSize: "13px", textAlign: "center", padding: "16px" }}>
-              {loading ? "Loading announcements from MongoDB..." : "No active announcements in MongoDB."}
+              {loadingAnnouncements ? "Loading announcements from MongoDB..." : "No active announcements in MongoDB."}
             </p>
           ) : (
             announcements.map((item) => (
@@ -408,7 +414,7 @@ function Dashboard({
                   <div className="announcement-title" style={{ fontWeight: "700", color: "var(--text-primary)" }}>
                     {item.title}
                   </div>
-                  {item._id && (
+                  {canManageAnnouncements && item._id && (
                     <button
                       type="button"
                       onClick={() => handleDeleteAnnouncement(item._id)}

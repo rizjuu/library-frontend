@@ -18,6 +18,8 @@ function StaffDashboard() {
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
 
   // Toast Helper
   const showToast = (message, type = "info") => {
@@ -40,8 +42,21 @@ function StaffDashboard() {
     }
   };
 
+  const fetchAnnouncements = async () => {
+    setLoadingAnnouncements(true);
+    try {
+      const res = await api.get("/announcements");
+      setAnnouncements(res.data || []);
+    } catch (err) {
+      console.error("Failed to load announcements", err);
+    } finally {
+      setLoadingAnnouncements(false);
+    }
+  };
+
   useEffect(() => {
     fetchBooks();
+    fetchAnnouncements();
   }, []);
 
   const totalBooks = books.length;
@@ -93,6 +108,8 @@ function StaffDashboard() {
             availableBooks={availableBooks}
             borrowedBooks={borrowedBooks}
             books={books}
+            announcements={announcements}
+            loadingAnnouncements={loadingAnnouncements}
             onNavigate={(tab) => setActiveTab(tab)}
           />
         )}

@@ -116,6 +116,25 @@ export default function Landing() {
     return () => clearInterval(interval);
   }, [galleryPhotos.length]);
 
+  useEffect(() => {
+    const revealItems = document.querySelectorAll(".landing-reveal");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          } else {
+            entry.target.classList.remove("is-visible");
+          }
+        });
+      },
+      { threshold: 0.14, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    revealItems.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, []);
+
   const categories = [
     { id: "everything", label: "Everything" },
     { id: "fiction", label: "Fiction & Literature" },
@@ -171,8 +190,8 @@ export default function Landing() {
       </header>
 
       {/* HERO SECTION */}
-      <section id="hero" className="hero-section">
-        <div className="hero-wrapper">
+      <section id="hero" className="hero-section landing-reveal">
+        <div className="hero-wrapper landing-reveal">
           <div className="hero-text-side">
             <div className="hero-eyebrow-pill">
               <Sparkles size={14} />
@@ -208,8 +227,9 @@ export default function Landing() {
           </div>
 
           {/* Featured Visual Frame with auto-cycle */}
-          <div className="hero-visual-frame">
+          <div className="hero-visual-frame landing-reveal">
             <img
+              key={heroImageIndex}
               src={galleryPhotos[heroImageIndex].src}
               alt={galleryPhotos[heroImageIndex].title}
               className="hero-visual-img"
@@ -230,7 +250,7 @@ export default function Landing() {
       </section>
 
       {/* STATS SECTION - Magic Link box removed per request */}
-      <section className="stats-section">
+      <section className="stats-section landing-reveal">
         <div className="stats-grid-container">
           <div className="stat-item-box">
             <span className="stat-number-text">12,000+</span>
@@ -248,8 +268,8 @@ export default function Landing() {
       </section>
 
       {/* COLLECTION DIRECTORY SECTION */}
-      <section id="directory" className="directory-section">
-        <div className="section-header-block">
+      <section id="directory" className="directory-section landing-reveal">
+        <div className="section-header-block landing-reveal">
           <div>
             <span className="section-eyebrow">Public Collection</span>
             <h2 className="section-main-title">
@@ -286,8 +306,8 @@ export default function Landing() {
       </section>
 
       {/* PHOTO GALLERY PICTURE FRAMES SECTION */}
-      <section id="gallery" className="gallery-section">
-        <div className="section-header-block">
+      <section id="gallery" className="gallery-section landing-reveal">
+        <div className="section-header-block landing-reveal">
           <div>
             <span className="section-eyebrow">Visual Tour</span>
             <h2 className="section-main-title">
@@ -303,7 +323,7 @@ export default function Landing() {
           {galleryPhotos.map((photo, idx) => (
             <div
               key={photo.id}
-              className="picture-frame-card"
+              className="picture-frame-card landing-reveal"
               onClick={() => setPreviewIndex(idx)}
               title="Click to view picture preview"
             >
@@ -360,9 +380,10 @@ export default function Landing() {
               </button>
 
               <img
+                key={previewIndex}
                 src={galleryPhotos[previewIndex].src}
                 alt={galleryPhotos[previewIndex].title}
-                className="lightbox-img-element"
+                className="lightbox-img-element lightbox-image-fade"
               />
 
               <button
@@ -389,8 +410,8 @@ export default function Landing() {
       )}
 
       {/* FACILITIES SECTION */}
-      <section id="facilities" className="facilities-section">
-        <div className="section-header-block">
+      <section id="facilities" className="facilities-section landing-reveal">
+        <div className="section-header-block landing-reveal">
           <div>
             <span className="section-eyebrow">Public Amenities</span>
             <h2 className="section-main-title">
@@ -400,7 +421,7 @@ export default function Landing() {
         </div>
 
         <div className="facilities-grid">
-          <div className="facility-card">
+          <div className="facility-card landing-reveal">
             <div className="facility-icon-box">
               <BookOpen size={24} />
             </div>
@@ -410,7 +431,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="facility-card">
+          <div className="facility-card landing-reveal">
             <div className="facility-icon-box">
               <FileText size={24} />
             </div>
@@ -420,7 +441,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="facility-card">
+          <div className="facility-card landing-reveal">
             <div className="facility-icon-box">
               <ShieldCheck size={24} />
             </div>
@@ -433,7 +454,7 @@ export default function Landing() {
       </section>
 
       {/* LOCATION & HOURS SECTION */}
-      <section id="location" className="location-section">
+      <section id="location" className="location-section landing-reveal">
         <div className="location-wrapper">
           <div className="location-info-block">
             <div>

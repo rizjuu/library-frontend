@@ -8,7 +8,7 @@ import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
-import Login from "./pages/Login";
+import Login from "./pages/login";
 import AdminDashboard from "./pages/AdminDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import PatronDashboard from "./pages/PatronDashboard";
@@ -22,7 +22,15 @@ function App() {
           <Route path="/" element={<Landing />} />
 
           {/* Login Page with Admin, Staff, and Patron Gmail tabs */}
-          <Route path="/login" element={<Login />} />
+          <Route
+            path="/login"
+            element={
+              <>
+                <Landing />
+                <Login overlay />
+              </>
+            }
+          />
 
           {/* Protected Admin Dashboard */}
           <Route
