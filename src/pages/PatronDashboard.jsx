@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
+import Catalog from "./Catalog";
 import {
   BookOpen,
   BookmarkCheck,
@@ -53,22 +54,9 @@ function PatronDashboard() {
     }
   };
 
-  const [announcements, setAnnouncements] = useState([]);
-
-  const fetchAnnouncements = async () => {
-    try {
-      const res = await api.get("/announcements");
-      setAnnouncements(res.data || []);
-    } catch (err) {
-      console.error("Failed to load announcements for patron", err);
-    }
-  };
-
   useEffect(() => {
     fetchBooks();
-    fetchAnnouncements();
   }, []);
-
 
   const getInitials = (name) => {
     if (!name) return "P";
@@ -379,123 +367,31 @@ function PatronDashboard() {
                   </h3>
                 </div>
 
-                {announcements.length === 0 ? (
-                  <p style={{ color: "var(--text-muted)", fontSize: "13px", textAlign: "center", padding: "16px" }}>
-                    No active library notices.
+                <div className="announcement-item">
+                  <div className="announcement-title">Library Hours Extended</div>
+                  <p className="announcement-desc">
+                    The library is now open until 8:00 PM on weekdays for study and reading.
                   </p>
-                ) : (
-                  announcements.map((item) => (
-                    <div key={item._id || item.id} className="announcement-item">
-                      <div className="announcement-title" style={{ fontWeight: "700", color: "var(--text-primary)" }}>
-                        {item.title}
-                      </div>
-                      <p className="announcement-desc" style={{ margin: "4px 0", fontSize: "13px" }}>
-                        {item.content}
-                      </p>
-                      <span className="announcement-date" style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                        📅 {item.date || (item.createdAt ? new Date(item.createdAt).toISOString().split("T")[0] : "Recent")}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
+                  <span className="announcement-date">2026-08-01</span>
+                </div>
 
+                <div className="announcement-item">
+                  <div className="announcement-title">Digital Library Services</div>
+                  <p className="announcement-desc">
+                    Ask staff at the desk about free SMS alerts for your due dates.
+                  </p>
+                  <span className="announcement-date">2026-08-10</span>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
 
         {activeTab === "books" && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="page-title-row">
-              <div>
-                <h1 className="page-title">Browse Library Catalog</h1>
-                <p className="page-subtitle">Search for books, check shelf availability, and locate titles.</p>
-              </div>
-            </div>
-
-            <div className="catalog-toolbar">
-              <div className="toolbar-search">
-                <Search size={20} className="toolbar-search-icon" />
-                <input
-                  type="text"
-                  className="toolbar-search-input"
-                  placeholder="Search by title, author, or barcode..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              <select
-                className="toolbar-select"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="all">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            {loadingBooks ? (
-              <div className="empty-state">
-                <BookOpen size={48} className="empty-state-icon" />
-                <h3 className="empty-state-title">Loading Books...</h3>
-              </div>
-            ) : filteredCatalog.length === 0 ? (
-              <div className="empty-state">
-                <BookOpen size={48} className="empty-state-icon" />
-                <h3 className="empty-state-title">No Books Found</h3>
-                <p className="empty-state-desc">Try adjusting your search criteria.</p>
-              </div>
-            ) : (
-              <div className="book-grid">
-                {filteredCatalog.map((book) => (
-                  <div key={book._id || book.barcode} className="book-card">
-                    <div>
-                      <div className="book-card-head">
-                        <div className="book-icon-box">
-                          <BookOpen size={24} />
-                        </div>
-                        <span className={`status-pill ${book.available ? "active" : "overdue"}`}>
-                          <span className="status-pill-dot" />
-                          {book.available ? "Available" : "Borrowed"}
-                        </span>
-                      </div>
-
-                      <h3 className="book-title">{book.title}</h3>
-                      <p className="book-author">by {book.author}</p>
-                    </div>
-
-                    <div>
-                      <div className="book-meta-rows">
-                        <div className="book-meta-row">
-                          <span className="book-meta-label">Category</span>
-                          <span className="book-meta-value">{book.category || "General"}</span>
-                        </div>
-                        <div className="book-meta-row">
-                          <span className="book-meta-label">Shelf</span>
-                          <span className="book-meta-value">{book.shelf || "Main Shelf"}</span>
-                        </div>
-                        <div className="book-meta-row">
-                          <span className="book-meta-label">Barcode</span>
-                          <span className="barcode-chip">
-                            <Barcode size={14} />
-                            {book.barcode}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
+          <Catalog books={books} loading={loadingBooks} isPatronView={true} />
         )}
+
+
 
         {activeTab === "my-loans" && (
           <div className="dashboard-shell">

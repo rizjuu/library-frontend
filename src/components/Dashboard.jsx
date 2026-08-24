@@ -17,7 +17,6 @@ import {
   Calendar,
   UserCheck
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
 import api from "../api";
 
 function Dashboard({
@@ -34,9 +33,6 @@ function Dashboard({
   onRefreshData = () => {},
   showToast = () => {}
 }) {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
-
   const formatNum = (n) => (n !== undefined && n !== null ? Number(n).toLocaleString() : "0");
 
   const [newTitle, setNewTitle] = useState("");
@@ -47,11 +43,6 @@ function Dashboard({
 
   const handlePostAnnouncement = async (e) => {
     e.preventDefault();
-    if (!isAdmin) {
-      showToast("Only Administrators can post announcements.", "error");
-      return;
-    }
-
     if (!newTitle.trim() || !newContent.trim()) {
       showToast("Please fill in both title and content.", "error");
       return;
@@ -63,10 +54,10 @@ function Dashboard({
         title: newTitle.trim(),
         content: newContent.trim(),
         priority: newPriority,
-        author: user?.name || "Library Admin"
+        author: "Library Admin"
       });
 
-      showToast("Announcement posted successfully to the library system!", "success");
+      showToast("Announcement posted successfully to MongoDB!", "success");
       setNewTitle("");
       setNewContent("");
       setNewPriority("normal");
@@ -74,25 +65,20 @@ function Dashboard({
       onRefreshData();
     } catch (error) {
       console.error("Failed to post announcement:", error);
-      showToast(error.response?.data?.message || "Only Admin can modify announcements", "error");
+      showToast(error.response?.data?.message || "Failed to post announcement", "error");
     } finally {
       setPostingAnnouncement(false);
     }
   };
 
   const handleDeleteAnnouncement = async (id) => {
-    if (!isAdmin) {
-      showToast("Only Administrators can delete announcements.", "error");
-      return;
-    }
-
     try {
       await api.delete(`/announcements/${id}`);
-      showToast("Announcement removed from the library system.", "success");
+      showToast("Announcement removed from MongoDB.", "success");
       onRefreshData();
     } catch (error) {
       console.error("Failed to delete announcement:", error);
-      showToast(error.response?.data?.message || "Failed to delete announcement", "error");
+      showToast("Failed to delete announcement", "error");
     }
   };
 
@@ -117,7 +103,7 @@ function Dashboard({
           <h1 className="page-title">
             Library Overview <span role="img" aria-label="waving hand">📊</span>
           </h1>
-          <p className="page-subtitle">Real-time statistics connected directly to the live library system.</p>
+          <p className="page-subtitle">Real-time statistics connected directly to live MongoDB collections.</p>
         </div>
 
         {/* Action Toolbar */}
@@ -146,16 +132,14 @@ function Dashboard({
             <BookOpen size={18} className="w-5 h-5" />
             Add Book
           </button>
-          {isAdmin && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowAddModal(true)}
-            >
-              <Megaphone size={18} className="w-5 h-5" />
-              Post Announcement
-            </button>
-          )}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowAddModal(true)}
+          >
+            <Megaphone size={18} className="w-5 h-5" />
+            Post Announcement
+          </button>
         </div>
       </div>
 
@@ -174,7 +158,7 @@ function Dashboard({
               {loading ? <Loader2 size={24} className="animate-spin" /> : formatNum(totalBooks)}
             </div>
             <div className="stat-change up">
-              <span>Live System Query</span>
+              <span>Live MongoDB Query</span>
             </div>
           </div>
         </div>
@@ -254,12 +238,12 @@ function Dashboard({
 
       {/* Main Dashboard Two-Column Grid */}
       <div className="dashboard-grid-layout">
-        {/* Left Column: Recent Transactions */}
+        {/* Left Column: 6. Live Recent Transactions */}
         <div className="recent-transactions-card">
           <div className="card-header-row">
             <div>
               <h3 className="card-header-title">Recent Transactions</h3>
-              <p className="card-header-sub">Live circulation activity logs</p>
+              <p className="card-header-sub">Live MongoDB circulation activity logs</p>
             </div>
             <button
               type="button"
@@ -285,7 +269,7 @@ function Dashboard({
                 {recentTransactions.length === 0 ? (
                   <tr>
                     <td colSpan="5" style={{ textAlign: "center", padding: "24px", color: "var(--text-muted)" }}>
-                      {loading ? "Loading transactions..." : "No recent transactions found."}
+                      {loading ? "Loading transactions from MongoDB..." : "No recent transactions found in MongoDB."}
                     </td>
                   </tr>
                 ) : (
@@ -319,26 +303,24 @@ function Dashboard({
           </div>
         </div>
 
-        {/* Right Column: Live Announcements */}
+        {/* Right Column: 7. Live MongoDB Announcements */}
         <div className="announcements-card">
           <div className="card-header-row" style={{ marginBottom: "12px" }}>
             <h3 className="card-header-title">
               <Megaphone size={20} className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
               Live Announcements
             </h3>
-            {isAdmin && (
-              <button
-                type="button"
-                className="btn-link-action"
-                onClick={() => setShowAddModal(!showAddModal)}
-              >
-                + Post New
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn-link-action"
+              onClick={() => setShowAddModal(!showAddModal)}
+            >
+              + Post New
+            </button>
           </div>
 
-          {/* Announcement Posting Modal / Form (ADMIN ONLY) */}
-          {isAdmin && showAddModal && (
+          {/* Announcement Posting Modal / Form */}
+          {showAddModal && (
             <form onSubmit={handlePostAnnouncement} style={{
               background: "var(--bg-base)",
               padding: "14px",
@@ -349,7 +331,7 @@ function Dashboard({
               <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", color: "var(--text-primary)" }}>New Announcement</h4>
               <input
                 type="text"
-                placeholder="Title (e.g., Extended Library Hours)"
+                placeholder="Title (e.g., Library Operating Hours)"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 style={{
@@ -408,7 +390,7 @@ function Dashboard({
                     disabled={postingAnnouncement}
                     style={{ padding: "6px 12px", fontSize: "12px" }}
                   >
-                    {postingAnnouncement ? "Posting..." : "Post Announcement"}
+                    {postingAnnouncement ? "Posting..." : "Post to MongoDB"}
                   </button>
                 </div>
               </div>
@@ -417,7 +399,7 @@ function Dashboard({
 
           {announcements.length === 0 ? (
             <p style={{ color: "var(--text-muted)", fontSize: "13px", textAlign: "center", padding: "16px" }}>
-              {loading ? "Loading announcements..." : "No active announcements."}
+              {loading ? "Loading announcements from MongoDB..." : "No active announcements in MongoDB."}
             </p>
           ) : (
             announcements.map((item) => (
@@ -426,11 +408,11 @@ function Dashboard({
                   <div className="announcement-title" style={{ fontWeight: "700", color: "var(--text-primary)" }}>
                     {item.title}
                   </div>
-                  {isAdmin && item._id && (
+                  {item._id && (
                     <button
                       type="button"
                       onClick={() => handleDeleteAnnouncement(item._id)}
-                      title="Delete announcement"
+                      title="Delete from MongoDB"
                       style={{
                         background: "none",
                         border: "none",

@@ -6,10 +6,10 @@ import Catalog from "./Catalog";
 import Circulation from "./Circulation";
 import AddBook from "./AddBook";
 import ImportBooks from "./ImportBooks";
+import PatronManagement from "../components/PatronManagement";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
-import { Users, Shield, BookOpen, BarChart3, Loader2 } from "lucide-react";
 
 function AdminDashboard() {
   const { theme, toggleTheme } = useAuth();
@@ -19,7 +19,7 @@ function AdminDashboard() {
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [toasts, setToasts] = useState([]);
 
-  // Live Dashboard Stats State
+  // Live Dashboard Stats State from MongoDB
   const [dashboardStats, setDashboardStats] = useState({
     totalBooks: 0,
     availableBooks: 0,
@@ -32,10 +32,6 @@ function AdminDashboard() {
     announcements: []
   });
   const [loadingStats, setLoadingStats] = useState(true);
-
-  // Live System Users State
-  const [liveUsers, setLiveUsers] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Toast Helper
   const showToast = (message, type = "info") => {
@@ -62,7 +58,7 @@ function AdminDashboard() {
         announcements: res.data.announcements || []
       });
     } catch (err) {
-      console.error("Failed to load dashboard stats:", err);
+      console.error("Failed to load dashboard stats from MongoDB:", err);
     } finally {
       setLoadingStats(false);
     }
@@ -80,28 +76,14 @@ function AdminDashboard() {
     }
   };
 
-  const fetchLiveUsers = async () => {
-    setLoadingUsers(true);
-    try {
-      const res = await api.get("/auth/users");
-      setLiveUsers(res.data || []);
-    } catch (err) {
-      console.error("Failed to load live users:", err);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
-
   useEffect(() => {
     fetchDashboardStats();
     fetchBooks();
-    fetchLiveUsers();
   }, []);
 
   const handleRefreshAll = () => {
     fetchDashboardStats();
     fetchBooks();
-    fetchLiveUsers();
   };
 
   return (
@@ -190,122 +172,7 @@ function AdminDashboard() {
         )}
 
         {activeTab === "users" && (
-          <div className="dashboard-shell">
-            <div className="page-title-row">
-              <div>
-                <h1 className="page-title">
-                  <Users size={28} style={{ color: "var(--color-primary)" }} />
-                  User &amp; Role Management
-                </h1>
-                <p className="page-subtitle">
-                  Live registered administrators, staff members, and patrons.
-                </p>
-              </div>
-            </div>
-
-            <div className="stats-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-              <div className="stat-card primary">
-                <div className="stat-card-top">
-                  <span className="stat-label">TOTAL REGISTERED USERS</span>
-                  <div className="stat-icon-box primary">
-                    <Users size={24} />
-                  </div>
-                </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">
-                    {loadingUsers ? <Loader2 size={24} className="animate-spin" /> : liveUsers.length}
-                  </div>
-                  <div className="stat-change up"><span>Active user accounts</span></div>
-                </div>
-              </div>
-
-              <div className="stat-card info">
-                <div className="stat-card-top">
-                  <span className="stat-label">STAFF &amp; ADMINS</span>
-                  <div className="stat-icon-box info">
-                    <Shield size={24} />
-                  </div>
-                </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">
-                    {liveUsers.filter((u) => u.role === "admin" || u.role === "staff").length}
-                  </div>
-                  <div className="stat-change neutral"><span>System Operators</span></div>
-                </div>
-              </div>
-
-              <div className="stat-card success">
-                <div className="stat-card-top">
-                  <span className="stat-label">REGISTERED PATRONS</span>
-                  <div className="stat-icon-box success">
-                    <Users size={24} />
-                  </div>
-                </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">
-                    {liveUsers.filter((u) => u.role === "patron").length}
-                  </div>
-                  <div className="stat-change up"><span>Cardholders</span></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="recent-transactions-card">
-              <div className="card-header-row">
-                <h3 className="card-header-title">Live User Directory</h3>
-              </div>
-
-              <div className="table-container">
-                <table className="ui-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>NAME</th>
-                      <th>USERNAME / EMAIL</th>
-                      <th>ROLE</th>
-                      <th>CREATED DATE</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liveUsers.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" style={{ textAlign: "center", padding: "20px", color: "var(--text-muted)" }}>
-                          {loadingUsers ? "Loading users..." : "No users found."}
-                        </td>
-                      </tr>
-                    ) : (
-                      liveUsers.map((u) => {
-                        const uId = u._id ? `U-${u._id.substring(u._id.length - 4)}` : "U-USER";
-                        const userIdentifier = u.username ? `@${u.username}` : u.email || "—";
-                        const formattedDate = u.createdAt
-                          ? new Date(u.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-                          : "Existing";
-
-                        return (
-                          <tr key={u._id || Math.random()}>
-                            <td><span className="id-chip">{uId}</span></td>
-                            <td className="patron-cell">{u.name || "Library User"}</td>
-                            <td className="book-title-cell">{userIdentifier}</td>
-                            <td>
-                              <span
-                                className={`status-pill ${
-                                  u.role === "admin" ? "active" : u.role === "staff" ? "returned" : "active"
-                                }`}
-                              >
-                                <span className="status-pill-dot" />
-                                {(u.role || "patron").toUpperCase()}
-                              </span>
-                            </td>
-                            <td>{formattedDate}</td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <PatronManagement showToast={showToast} />
         )}
       </main>
     </div>
