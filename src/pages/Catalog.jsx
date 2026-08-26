@@ -15,10 +15,20 @@ import {
   X,
   RotateCcw,
   CheckCircle,
-  BookmarkCheck
+  BookmarkCheck,
+  Archive
 } from "lucide-react";
+import api from "../api";
 
-function Catalog({ books = [], loading = false, onNavigateToAddBook, isPatronView = false }) {
+function Catalog({
+  books = [],
+  loading = false,
+  onNavigateToAddBook,
+  isPatronView = false,
+  canArchive = false,
+  onBookArchived,
+  showToast = () => {}
+}) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [shelfFilter, setShelfFilter] = useState("all");
@@ -112,6 +122,22 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook, isPatronVie
       month: "short",
       day: "numeric"
     });
+  };
+
+  const handleArchive = async () => {
+    if (!selectedBook || !window.confirm(`Archive "${selectedBook.title}"? The record will be kept and removed from the active catalog.`)) {
+      return;
+    }
+
+    try {
+      await api.patch(`/books/${selectedBook._id}/archive`);
+      showToast(`Book "${selectedBook.title}" archived successfully.`, "success");
+      setSelectedBook(null);
+      if (onBookArchived) onBookArchived();
+    } catch (error) {
+      console.error("Failed to archive book:", error);
+      showToast(error.response?.data?.message || "Failed to archive book.", "error");
+    }
   };
 
   return (
@@ -480,7 +506,13 @@ function Catalog({ books = [], loading = false, onNavigateToAddBook, isPatronVie
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+              {canArchive && (
+                <button type="button" className="btn btn-secondary" onClick={handleArchive}>
+                  <Archive size={17} />
+                  Archive Book
+                </button>
+              )}
               <button type="button" className="btn btn-secondary" onClick={() => setSelectedBook(null)}>
                 Close Details
               </button>

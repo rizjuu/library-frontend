@@ -6,6 +6,8 @@ import Catalog from "./Catalog";
 import Circulation from "./Circulation";
 import AddBook from "./AddBook";
 import ImportBooks from "./ImportBooks";
+import BarcodeGenerator from "./BarcodeGenerator";
+import Profile from "./Profile";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
@@ -129,6 +131,10 @@ function StaffDashboard() {
           />
         )}
 
+        {activeTab === "generate-barcode" && (
+          <BarcodeGenerator showToast={showToast} onBookAssigned={fetchBooks} />
+        )}
+
         {activeTab === "add-book" && (
           <AddBook
             onBookAdded={(newBook) => {
@@ -197,29 +203,7 @@ function StaffDashboard() {
           </div>
         )}
 
-        {activeTab === "my-info" && (
-          <div className="dashboard-shell">
-            <div className="page-title-row">
-              <div>
-                <h1 className="page-title">Staff Profile</h1>
-                <p className="page-subtitle">Your staff credentials and workstation details.</p>
-              </div>
-            </div>
-
-            <div className="addbook-wrapper">
-              <div className="addbook-card">
-                <div className="form-group">
-                  <label className="form-label">Role Privilege</label>
-                  <div className="form-readonly">Library Staff</div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Workstation Duties</label>
-                  <div className="form-readonly">Circulation Desk, Barcode Scanning, Cataloging &amp; Patron Service</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {activeTab === "my-info" && <Profile showToast={showToast} />}
 
         <footer className="app-footer">
           <span>Misamis Oriental Provincial Capitol Public Library System</span>

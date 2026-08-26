@@ -4,6 +4,7 @@ import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
 import Catalog from "./Catalog";
+import Profile from "./Profile";
 import {
   BookOpen,
   BookmarkCheck,
@@ -514,39 +515,7 @@ function PatronDashboard() {
           </div>
         )}
 
-        {activeTab === "my-info" && (
-          <div className="dashboard-shell">
-            <div className="page-title-row">
-              <div>
-                <h1 className="page-title">My Patron Profile</h1>
-                <p className="page-subtitle">Personal account details and card status.</p>
-              </div>
-            </div>
-
-            <div className="addbook-wrapper">
-              <div className="addbook-card">
-                <div className="form-group">
-                  <label className="form-label">Full Name</label>
-                  <div className="form-readonly">{displayName}</div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
-                  <div className="form-readonly">{displayEmail}</div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Membership Status</label>
-                  <div className="form-readonly" style={{ color: "var(--color-success)" }}>
-                    Active Patron — Good Standing
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Role</label>
-                  <div className="form-readonly">Patron / Library Reader</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {activeTab === "my-info" && <Profile showToast={showToast} />}
 
         <footer className="app-footer">
           <span>Misamis Oriental Provincial Capitol Public Library System</span>

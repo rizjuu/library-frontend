@@ -6,6 +6,9 @@ import Catalog from "./Catalog";
 import Circulation from "./Circulation";
 import AddBook from "./AddBook";
 import ImportBooks from "./ImportBooks";
+import Weeding from "./Weeding";
+import BarcodeGenerator from "./BarcodeGenerator";
+import Profile from "./Profile";
 import PatronManagement from "../components/PatronManagement";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
@@ -143,7 +146,14 @@ function AdminDashboard() {
             books={books}
             loading={loadingBooks}
             onNavigateToAddBook={() => setActiveTab("add-book")}
+            canArchive={true}
+            onBookArchived={fetchBooks}
+            showToast={showToast}
           />
+        )}
+
+        {activeTab === "generate-barcode" && (
+          <BarcodeGenerator showToast={showToast} onBookAssigned={handleRefreshAll} />
         )}
 
         {activeTab === "circulation" && (
@@ -176,6 +186,10 @@ function AdminDashboard() {
         {activeTab === "users" && (
           <PatronManagement showToast={showToast} />
         )}
+
+        {activeTab === "weeding" && <Weeding />}
+
+        {activeTab === "my-info" && <Profile showToast={showToast} />}
       </main>
     </div>
   );

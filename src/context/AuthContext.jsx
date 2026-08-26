@@ -66,6 +66,12 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUser = (userData) => {
+    setUser((currentUser) => ({ ...currentUser, ...userData }));
+    const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+    storage.setItem("user", JSON.stringify({ ...user, ...userData }));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -75,6 +81,7 @@ export function AuthProvider({ children }) {
         theme,
         toggleTheme,
         login,
+        updateUser,
         logout,
       }}
     >

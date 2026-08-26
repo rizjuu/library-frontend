@@ -9,6 +9,7 @@ import {
   LogOut,
   Users,
   CloudDownload,
+  Archive,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -39,16 +40,23 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
     { id: "dashboard", label: "Home", icon: Home },
     { id: "books", label: "Catalog", icon: BookOpen },
     { id: "circulation", label: "Circulation", icon: Repeat },
-    { id: "add-book", label: "Generate Barcode", icon: QrCode },
     { id: "import-books", label: "Open Library Import", icon: CloudDownload },
     { id: "reports", label: "Reports", icon: BarChart3 },
   ];
 
-  if (isAdmin) {
-    navItems.push({ id: "users", label: "User Management", icon: Users });
+  if (isAdmin || isStaff) {
+    navItems.splice(3, 0,
+      { id: "generate-barcode", label: "Generate Barcode", icon: QrCode },
+      { id: "add-book", label: "Add New Book", icon: BookOpen }
+    );
   }
 
-  navItems.push({ id: "my-info", label: "My Profile", icon: User });
+  if (isAdmin) {
+    navItems.push({ id: "users", label: "User Management", icon: Users });
+    navItems.push({ id: "weeding", label: "Weeding", icon: Archive });
+  }
+
+  navItems.push({ id: "my-info", label: "My Info", icon: User });
 
   const displayName = user?.name || (isAdmin ? "Administrator" : isStaff ? "Library Staff" : "User");
   const displayRole = user?.role
