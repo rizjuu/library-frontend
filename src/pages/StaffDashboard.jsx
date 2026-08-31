@@ -7,6 +7,7 @@ import Circulation from "./Circulation";
 import AddBook from "./AddBook";
 import ImportBooks from "./ImportBooks";
 import BarcodeGenerator from "./BarcodeGenerator";
+import Reports from "./Reports";
 import Profile from "./Profile";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
@@ -22,6 +23,8 @@ function StaffDashboard() {
   const [toasts, setToasts] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
+  const [patrons, setPatrons] = useState([]);
+  const [loadingPatrons, setLoadingPatrons] = useState(true);
 
   // Toast Helper
   const showToast = (message, type = "info") => {
@@ -56,20 +59,27 @@ function StaffDashboard() {
     }
   };
 
+  const fetchPatrons = async () => {
+    setLoadingPatrons(true);
+    try {
+      const res = await api.get("/users", { params: { role: "patron" } });
+      setPatrons(res.data || []);
+    } catch (err) {
+      console.error("Failed to load patrons", err);
+    } finally {
+      setLoadingPatrons(false);
+    }
+  };
+
   useEffect(() => {
     fetchBooks();
     fetchAnnouncements();
+    fetchPatrons();
   }, []);
 
   const totalBooks = books.length;
   const availableBooks = books.filter((b) => b.available !== false).length;
   const borrowedBooks = books.filter((b) => b.available === false).length;
-
-  const samplePatrons = [
-    { id: "P-8801", name: "Maria Santos", email: "maria.santos@email.com", activeLoans: 2, status: "Good Standing" },
-    { id: "P-8802", name: "Juan Dela Cruz", email: "juan.delacruz@email.com", activeLoans: 1, status: "Good Standing" },
-    { id: "P-8803", name: "Ana Reyes", email: "ana.reyes@email.com", activeLoans: 0, status: "Good Standing" },
-  ];
 
   return (
     <div className="app-shell">
@@ -128,11 +138,16 @@ function StaffDashboard() {
             books={books}
             loading={loadingBooks}
             onNavigateToAddBook={() => setActiveTab("add-book")}
+            canEdit={true}
+            onBookUpdated={fetchBooks}
+            showToast={showToast}
           />
         )}
 
+        {activeTab === "reports" && <Reports showToast={showToast} />}
+
         {activeTab === "generate-barcode" && (
-          <BarcodeGenerator showToast={showToast} onBookAssigned={fetchBooks} />
+          <BarcodeGenerator showToast={showToast} />
         )}
 
         {activeTab === "add-book" && (
@@ -182,20 +197,34 @@ function StaffDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {samplePatrons.map((p) => (
-                      <tr key={p.id}>
-                        <td><span className="id-chip">{p.id}</span></td>
-                        <td className="patron-cell">{p.name}</td>
-                        <td className="book-title-cell">{p.email}</td>
-                        <td>{p.activeLoans} items</td>
-                        <td>
-                          <span className="status-pill active">
-                            <span className="status-pill-dot" />
-                            {p.status}
-                          </span>
+                    {loadingPatrons ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>
+                          Loading patrons...
                         </td>
                       </tr>
-                    ))}
+                    ) : patrons.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>
+                          No registered patrons yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      patrons.map((p) => (
+                        <tr key={p._id}>
+                          <td><span className="id-chip">{p._id.slice(-6).toUpperCase()}</span></td>
+                          <td className="patron-cell">{p.name}</td>
+                          <td className="book-title-cell">{p.email}</td>
+                          <td>{p.activeLoans ?? 0} items</td>
+                          <td>
+                            <span className={`status-pill ${p.status === "disabled" ? "overdue" : "active"}`}>
+                              <span className="status-pill-dot" />
+                              {p.status === "disabled" ? "Disabled" : "Good Standing"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

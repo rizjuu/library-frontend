@@ -36,6 +36,14 @@ function PatronDashboard() {
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [myLoans, setMyLoans] = useState([]);
+  const [myHistory, setMyHistory] = useState([]);
+  const [myStats, setMyStats] = useState({
+    activeLoans: 0,
+    returnedCount: 0,
+    nextDueDate: null
+  });
+  const [loadingLoans, setLoadingLoans] = useState(true);
 
   const showToast = (message, type = "info") => {
     const id = Date.now();
@@ -69,10 +77,78 @@ function PatronDashboard() {
     }
   };
 
+  const fetchMyLoans = async () => {
+    setLoadingLoans(true);
+    try {
+      const res = await api.get("/transactions/my-loans");
+      setMyLoans(res.data || []);
+    } catch (err) {
+      console.error("Failed to load my loans", err);
+    } finally {
+      setLoadingLoans(false);
+    }
+  };
+
+  const fetchMyHistory = async () => {
+    try {
+      const res = await api.get("/transactions/my-history");
+      setMyHistory(res.data || []);
+    } catch (err) {
+      console.error("Failed to load my history", err);
+    }
+  };
+
+  const fetchMyStats = async () => {
+    try {
+      const res = await api.get("/transactions/my-stats");
+      setMyStats({
+        activeLoans: res.data.activeLoans || 0,
+        returnedCount: res.data.returnedCount || 0,
+        nextDueDate: res.data.nextDueDate || null
+      });
+    } catch (err) {
+      console.error("Failed to load my stats", err);
+    }
+  };
+
   useEffect(() => {
     fetchBooks();
     fetchAnnouncements();
+    fetchMyLoans();
+    fetchMyHistory();
+    fetchMyStats();
   }, []);
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  };
+
+  const getDueStatus = (dueDate) => {
+    if (!dueDate) return { label: "Active Loan", cls: "active" };
+    const days = Math.ceil((new Date(dueDate) - new Date()) / 86400000);
+    if (days < 0) return { label: `Overdue by ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"}`, cls: "overdue" };
+    if (days === 0) return { label: "Due Today", cls: "active" };
+    return { label: `Due in ${days} day${days === 1 ? "" : "s"}`, cls: "active" };
+  };
+
+  const nextDueLabel = myStats.nextDueDate
+    ? formatDate(myStats.nextDueDate)
+    : "No active loans";
+  const nextDueDays = myStats.nextDueDate
+    ? Math.ceil((new Date(myStats.nextDueDate) - new Date()) / 86400000)
+    : null;
+  const nextDueSub = nextDueDays === null
+    ? "Borrow a book to get started"
+    : nextDueDays < 0
+      ? "Overdue — please return"
+      : nextDueDays === 0
+        ? "Due today"
+        : `In ${nextDueDays} day${nextDueDays === 1 ? "" : "s"}`;
 
   const getInitials = (name) => {
     if (!name) return "P";
@@ -85,28 +161,6 @@ function PatronDashboard() {
 
   const displayName = user?.name || "Library Patron";
   const displayEmail = user?.email || "patron@example.com";
-
-  // Sample Patron Loan Items
-  const myBorrowedItems = [
-    {
-      id: "LN-501",
-      barcode: "LIB-0012",
-      title: "To Kill a Mockingbird",
-      author: "Harper Lee",
-      borrowDate: "2026-08-10",
-      dueDate: "2026-08-17",
-      status: "active",
-    },
-    {
-      id: "LN-502",
-      barcode: "LIB-0045",
-      title: "Data Structures & Algorithms",
-      author: "Robert Lafore",
-      borrowDate: "2026-08-12",
-      dueDate: "2026-08-19",
-      status: "active",
-    },
-  ];
 
   const categories = Array.from(
     new Set(books.map((b) => b.category).filter(Boolean))
@@ -277,7 +331,7 @@ function PatronDashboard() {
                   </div>
                 </div>
                 <div className="stat-card-body">
-                  <div className="stat-number">{myBorrowedItems.length}</div>
+                  <div className="stat-number">{myStats.activeLoans}</div>
                   <div className="stat-change up"><span>Books checked out</span></div>
                 </div>
               </div>
@@ -290,7 +344,7 @@ function PatronDashboard() {
                   </div>
                 </div>
                 <div className="stat-card-body">
-                  <div className="stat-number">14</div>
+                  <div className="stat-number">{myStats.returnedCount}</div>
                   <div className="stat-change up"><span>All-time total</span></div>
                 </div>
               </div>
@@ -303,8 +357,8 @@ function PatronDashboard() {
                   </div>
                 </div>
                 <div className="stat-card-body">
-                  <div className="stat-number" style={{ fontSize: "1.5rem" }}>Aug 17</div>
-                  <div className="stat-change neutral"><span>In 1 day</span></div>
+                  <div className="stat-number" style={{ fontSize: "1.5rem" }}>{nextDueLabel}</div>
+                  <div className="stat-change neutral"><span>{nextDueSub}</span></div>
                 </div>
               </div>
 
@@ -316,7 +370,7 @@ function PatronDashboard() {
                   </div>
                 </div>
                 <div className="stat-card-body">
-                  <div className="stat-number">{books.length || 12847}</div>
+                  <div className="stat-number">{books.length}</div>
                   <div className="stat-change up"><span>Ready to borrow</span></div>
                 </div>
               </div>
@@ -351,24 +405,41 @@ function PatronDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {myBorrowedItems.map((item) => (
-                        <tr key={item.id}>
-                          <td><span className="id-chip">{item.barcode}</span></td>
-                          <td className="book-title-cell">{item.title}</td>
-                          <td>{item.author}</td>
-                          <td>
-                            <span style={{ fontWeight: 600, color: "var(--color-primary)" }}>
-                              {item.dueDate}
-                            </span>
-                          </td>
-                          <td>
-                            <span className="status-pill active">
-                              <span className="status-pill-dot" />
-                              Active Loan
-                            </span>
+                      {loadingLoans ? (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>
+                            Loading your loans...
                           </td>
                         </tr>
-                      ))}
+                      ) : myLoans.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>
+                            You have no borrowed books right now.
+                          </td>
+                        </tr>
+                      ) : (
+                        myLoans.map((loan) => {
+                          const due = getDueStatus(loan.dueDate);
+                          return (
+                            <tr key={loan._id}>
+                              <td><span className="id-chip">{loan.bookId?.barcode || "—"}</span></td>
+                              <td className="book-title-cell">{loan.bookId?.title || "Unknown Title"}</td>
+                              <td>{loan.bookId?.author || "Unknown Author"}</td>
+                              <td>
+                                <span style={{ fontWeight: 600, color: "var(--color-primary)" }}>
+                                  {formatDate(loan.dueDate)}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`status-pill ${due.cls}`}>
+                                  <span className="status-pill-dot" />
+                                  {due.label}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -436,22 +507,39 @@ function PatronDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {myBorrowedItems.map((item) => (
-                      <tr key={item.id}>
-                        <td><span className="id-chip">{item.id}</span></td>
-                        <td><span className="id-chip">{item.barcode}</span></td>
-                        <td className="book-title-cell">{item.title}</td>
-                        <td>{item.author}</td>
-                        <td>{item.borrowDate}</td>
-                        <td className="patron-cell" style={{ color: "var(--color-primary)" }}>{item.dueDate}</td>
-                        <td>
-                          <span className="status-pill active">
-                            <span className="status-pill-dot" />
-                            Active Loan
-                          </span>
+                    {loadingLoans ? (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>
+                          Loading your loans...
                         </td>
                       </tr>
-                    ))}
+                    ) : myLoans.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>
+                          You have no borrowed books right now. Browse the catalog to check one out.
+                        </td>
+                      </tr>
+                    ) : (
+                      myLoans.map((loan) => {
+                        const due = getDueStatus(loan.dueDate);
+                        return (
+                          <tr key={loan._id}>
+                            <td><span className="id-chip">{loan._id.slice(-6).toUpperCase()}</span></td>
+                            <td><span className="id-chip">{loan.bookId?.barcode || "—"}</span></td>
+                            <td className="book-title-cell">{loan.bookId?.title || "Unknown Title"}</td>
+                            <td>{loan.bookId?.author || "Unknown Author"}</td>
+                            <td>{formatDate(loan.createdAt)}</td>
+                            <td className="patron-cell" style={{ color: "var(--color-primary)" }}>{formatDate(loan.dueDate)}</td>
+                            <td>
+                              <span className={`status-pill ${due.cls}`}>
+                                <span className="status-pill-dot" />
+                                {due.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -484,30 +572,38 @@ function PatronDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td><span className="id-chip">LIB-0005</span></td>
-                      <td className="book-title-cell">The Great Gatsby</td>
-                      <td>F. Scott Fitzgerald</td>
-                      <td>2026-07-28</td>
-                      <td>
-                        <span className="status-pill returned">
-                          <span className="status-pill-dot" />
-                          Returned On Time
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><span className="id-chip">LIB-0009</span></td>
-                      <td className="book-title-cell">1984</td>
-                      <td>George Orwell</td>
-                      <td>2026-06-15</td>
-                      <td>
-                        <span className="status-pill returned">
-                          <span className="status-pill-dot" />
-                          Returned On Time
-                        </span>
-                      </td>
-                    </tr>
+                    {myHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>
+                          No borrowing history yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      myHistory.map((tx) => {
+                        const wasOverdue = tx.returned && tx.returnDate && new Date(tx.returnDate) > new Date(tx.dueDate);
+                        return (
+                          <tr key={tx._id}>
+                            <td><span className="id-chip">{tx.bookId?.barcode || "—"}</span></td>
+                            <td className="book-title-cell">{tx.bookId?.title || "Unknown Title"}</td>
+                            <td>{tx.bookId?.author || "Unknown Author"}</td>
+                            <td>{tx.returned ? formatDate(tx.returnDate) : "Not returned"}</td>
+                            <td>
+                              {tx.returned ? (
+                                <span className="status-pill returned">
+                                  <span className="status-pill-dot" />
+                                  {wasOverdue ? "Returned Late" : "Returned On Time"}
+                                </span>
+                              ) : (
+                                <span className="status-pill active">
+                                  <span className="status-pill-dot" />
+                                  Currently Borrowed
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>

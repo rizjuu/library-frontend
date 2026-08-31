@@ -1,31 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { Archive, Barcode, Download, Hash, Loader2, Printer, RefreshCw, UserPlus } from "lucide-react";
+import { Barcode, Download, Hash, Loader2, Printer, RefreshCw } from "lucide-react";
 import JsBarcode from "jsbarcode";
 import { motion } from "framer-motion";
 import api from "../api";
 
-function BarcodeGenerator({ showToast = () => {}, onBookAssigned = () => {} }) {
+function BarcodeGenerator({ showToast = () => {} }) {
   const [count, setCount] = useState(1);
-  const [prefix, setPrefix] = useState("ACC");
   const [items, setItems] = useState([]);
-  const [books, setBooks] = useState([]);
-  const [selectedBook, setSelectedBook] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
   const [loading, setLoading] = useState(false);
-  const [assigning, setAssigning] = useState(false);
-  const barcodeRef = useRef(null);
+  const barcodeRefs = useRef({});
 
   useEffect(() => {
-    api.get("/books").then((response) => setBooks(response.data || [])).catch((error) => {
-      console.error("Failed to load books for barcode assignment:", error);
-    });
-  }, []);
-
-  const previewItem = items.find((item) => item.barcode === (selectedItem || items[0]?.barcode));
-
-  useEffect(() => {
-    if (barcodeRef.current && previewItem) {
-      JsBarcode(barcodeRef.current, previewItem.barcode, {
+    items.forEach((item) => {
+      const barcodeElement = barcodeRefs.current[item.barcode];
+      if (!barcodeElement) return;
+      JsBarcode(barcodeElement, item.barcode, {
         format: "CODE128",
         displayValue: true,
         fontSize: 16,
@@ -34,16 +24,15 @@ function BarcodeGenerator({ showToast = () => {}, onBookAssigned = () => {} }) {
         lineColor: "#172033",
         background: "#ffffff"
       });
-    }
-  }, [previewItem]);
+    });
+  }, [items]);
 
   const generateBarcodes = async (event) => {
     event.preventDefault();
     setLoading(true);
     try {
       const response = await api.post("/books/barcodes/generate", {
-        count: Number(count),
-        prefix
+        count: Number(count)
       });
       setItems(response.data.items || []);
       setSelectedItem("");
@@ -55,51 +44,19 @@ function BarcodeGenerator({ showToast = () => {}, onBookAssigned = () => {} }) {
     }
   };
 
-  const downloadBarcode = () => {
-    if (!barcodeRef.current || !previewItem) return;
-    const source = new XMLSerializer().serializeToString(barcodeRef.current);
-    const blob = new Blob([source], { type: "image/svg+xml" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${previewItem.barcode}.svg`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-  };
-
-  const printBarcode = () => {
-    if (!barcodeRef.current || !previewItem) return;
+  const openPrintableBatch = () => {
+    if (!items.length) return;
     const printWindow = window.open("", "_blank", "width=520,height=360");
     if (!printWindow) return;
-    printWindow.document.write(`<html><head><title>${previewItem.barcode}</title></head><body style="display:flex;justify-content:center;align-items:center;height:90vh">${barcodeRef.current.outerHTML}</body></html>`);
+    const labels = items.map((item) => {
+      const barcodeElement = barcodeRefs.current[item.barcode];
+      return `<article class="barcode-label"><strong>${item.accessionNumber}</strong>${barcodeElement?.outerHTML || ""}</article>`;
+    }).join("");
+    printWindow.document.write(`<html><head><title>Library Barcodes</title><style>@page{size:letter portrait;margin:.5in}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#172033;font-family:Arial,sans-serif}.sheet{width:7.5in;display:grid;grid-template-columns:repeat(2,1fr);gap:.22in}.barcode-label{height:1.55in;border:1px solid #cbd5e1;display:flex;flex-direction:column;align-items:center;justify-content:center;break-inside:avoid;page-break-inside:avoid;padding:.08in}.barcode-label strong{font-size:11pt;margin-bottom:5px}.barcode-label svg{max-width:100%;height:auto}</style></head><body><main class="sheet">${labels}</main></body></html>`);
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
     printWindow.close();
-  };
-
-  const assignBarcode = async (event) => {
-    event.preventDefault();
-    const book = books.find((item) => item._id === selectedBook);
-    const item = items.find((barcodeItem) => barcodeItem.barcode === selectedItem);
-    if (!book || !item) {
-      showToast("Select a book and a generated barcode first.", "error");
-      return;
-    }
-
-    setAssigning(true);
-    try {
-      await api.patch(`/books/${book._id}/assign-barcode`, item);
-      showToast(`Barcode assigned to "${book.title}".`, "success");
-      setBooks((currentBooks) => currentBooks.map((currentBook) => currentBook._id === book._id ? { ...currentBook, ...item } : currentBook));
-      setItems((currentItems) => currentItems.filter((currentItem) => currentItem.barcode !== item.barcode));
-      setSelectedBook("");
-      setSelectedItem("");
-      onBookAssigned();
-    } catch (error) {
-      showToast(error.response?.data?.message || "Failed to assign barcode.", "error");
-    } finally {
-      setAssigning(false);
-    }
   };
 
   return (
@@ -107,7 +64,7 @@ function BarcodeGenerator({ showToast = () => {}, onBookAssigned = () => {} }) {
       <div className="page-title-row">
         <div>
           <h1 className="page-title"><Barcode size={28} style={{ color: "var(--color-primary)" }} /> Generate Barcode</h1>
-          <p className="page-subtitle">Create, preview, and assign library accession labels.</p>
+          <p className="page-subtitle">Create and preview library accession labels.</p>
         </div>
       </div>
 
@@ -119,7 +76,6 @@ function BarcodeGenerator({ showToast = () => {}, onBookAssigned = () => {} }) {
           </div>
           <form onSubmit={generateBarcodes}>
             <div className="form-group"><label className="form-label" htmlFor="barcode-count">Number of barcodes</label><input id="barcode-count" className="form-input" type="number" min="1" max="100" value={count} onChange={(event) => setCount(event.target.value)} /></div>
-            <div className="form-group"><label className="form-label" htmlFor="accession-prefix">Accession prefix</label><input id="accession-prefix" className="form-input" value={prefix} maxLength="12" onChange={(event) => setPrefix(event.target.value.toUpperCase())} /></div>
             <button className="btn btn-primary btn-full" type="submit" disabled={loading}>{loading ? <><Loader2 size={19} className="animate-spin" /> Generating...</> : <><RefreshCw size={19} /> Generate Sequential Barcodes</>}</button>
           </form>
 
@@ -127,19 +83,10 @@ function BarcodeGenerator({ showToast = () => {}, onBookAssigned = () => {} }) {
         </section>
 
         <section className="circ-panel">
-          <div className="circ-panel-head"><div className="circ-panel-icon return"><Barcode size={24} /></div><div><h3 className="circ-panel-title">Barcode Preview</h3><p className="circ-panel-desc">Preview, download, or print the selected label.</p></div></div>
-          {previewItem ? <><div style={{ background: "#fff", padding: "18px", borderRadius: "8px", textAlign: "center", border: "1px solid var(--border)" }}><p style={{ margin: "0 0 8px", color: "#172033", fontWeight: 700 }}>{previewItem.accessionNumber}</p><svg ref={barcodeRef} aria-label={`Barcode ${previewItem.barcode}`} /></div><div className="form-actions" style={{ marginTop: "18px" }}><button type="button" className="btn btn-secondary" onClick={downloadBarcode}><Download size={18} /> Download</button><button type="button" className="btn btn-primary" onClick={printBarcode}><Printer size={18} /> Print</button></div></> : <div className="empty-state"><Barcode size={42} className="empty-state-icon" /><h3 className="empty-state-title">No Barcode Selected</h3><p className="empty-state-desc">Generate a batch to preview a barcode.</p></div>}
+          <div className="circ-panel-head"><div className="circ-panel-icon return"><Barcode size={24} /></div><div><h3 className="circ-panel-title">Barcode Preview</h3><p className="circ-panel-desc">Preview the full batch and export it on letter-size paper.</p></div></div>
+          {items.length > 0 ? <><div style={{ display: "grid", gap: "14px", maxHeight: "520px", overflowY: "auto" }}>{items.map((item) => <div key={item.barcode} style={{ background: "#fff", padding: "18px", borderRadius: "8px", textAlign: "center", border: `1px solid ${selectedItem === item.barcode ? "var(--color-primary)" : "var(--border)"}`, cursor: "pointer" }} onClick={() => setSelectedItem(item.barcode)}><p style={{ margin: "0 0 8px", color: "#172033", fontWeight: 700 }}>{item.accessionNumber}</p><svg ref={(element) => { barcodeRefs.current[item.barcode] = element; }} aria-label={`Barcode ${item.barcode}`} /></div>)}</div><div className="form-actions" style={{ marginTop: "18px" }}><button type="button" className="btn btn-primary" onClick={openPrintableBatch}><Download size={18} /> Download All as PDF</button><button type="button" className="btn btn-secondary" onClick={openPrintableBatch}><Printer size={18} /> Print All</button></div></> : <div className="empty-state"><Barcode size={42} className="empty-state-icon" /><h3 className="empty-state-title">No Barcodes Generated</h3><p className="empty-state-desc">Generate a batch to preview its barcodes.</p></div>}
         </section>
       </div>
-
-      <section className="circ-panel" style={{ marginTop: "24px" }}>
-        <div className="circ-panel-head"><div className="circ-panel-icon borrow"><UserPlus size={24} /></div><div><h3 className="circ-panel-title">Assign Barcode to Book</h3><p className="circ-panel-desc">Book <strong>↓</strong> Accession Number <strong>↓</strong> Barcode <strong>↓</strong> Book Record</p></div></div>
-        <form onSubmit={assignBarcode} className="form-grid-2col">
-          <div className="form-group"><label className="form-label" htmlFor="assign-book">Book</label><select id="assign-book" className="form-input select-field" value={selectedBook} onChange={(event) => setSelectedBook(event.target.value)}><option value="">Select an active book</option>{books.map((book) => <option key={book._id} value={book._id}>{book.title} {book.barcode ? `(${book.barcode})` : ""}</option>)}</select></div>
-          <div className="form-group"><label className="form-label" htmlFor="assign-barcode">Generated accession and barcode</label><select id="assign-barcode" className="form-input select-field" value={selectedItem} onChange={(event) => setSelectedItem(event.target.value)}><option value="">Select a generated label</option>{items.map((item) => <option key={item.barcode} value={item.barcode}>{item.accessionNumber} / {item.barcode}</option>)}</select></div>
-          <button className="btn btn-primary" type="submit" disabled={assigning || !selectedBook || !selectedItem}>{assigning ? <><Loader2 size={19} className="animate-spin" /> Assigning...</> : <><Archive size={19} /> Assign to Book Record</>}</button>
-        </form>
-      </section>
     </motion.div>
   );
 }

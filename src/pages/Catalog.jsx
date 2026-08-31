@@ -16,7 +16,8 @@ import {
   RotateCcw,
   CheckCircle,
   BookmarkCheck,
-  Archive
+  Archive,
+  Pencil
 } from "lucide-react";
 import api from "../api";
 
@@ -26,6 +27,8 @@ function Catalog({
   onNavigateToAddBook,
   isPatronView = false,
   canArchive = false,
+  canEdit = false,
+  onBookUpdated,
   onBookArchived,
   showToast = () => {}
 }) {
@@ -35,6 +38,9 @@ function Catalog({
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [decadeFilter, setDecadeFilter] = useState("all");
   const [selectedBook, setSelectedBook] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Extract unique Categories & Shelves from live books array
   const categories = Array.from(
@@ -122,6 +128,54 @@ function Catalog({
       month: "short",
       day: "numeric"
     });
+  };
+
+  const startEditing = () => {
+    setEditForm({
+      title: selectedBook.title || "",
+      isbn: selectedBook.isbn || "",
+      author: selectedBook.author || "",
+      category: selectedBook.category || "",
+      publisher: selectedBook.publisher || "",
+      publicationYear: selectedBook.publicationYear || "",
+      shelf: selectedBook.shelf || "",
+      status: selectedBook.status || "available"
+    });
+    setIsEditing(true);
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditSave = async () => {
+    if (!editForm.title.trim()) {
+      showToast("Title is required.", "error");
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      const res = await api.put(`/books/${selectedBook._id}`, {
+        title: editForm.title,
+        isbn: editForm.isbn,
+        author: editForm.author,
+        category: editForm.category,
+        publisher: editForm.publisher,
+        publicationYear: editForm.publicationYear === "" ? null : Number(editForm.publicationYear),
+        shelf: editForm.shelf,
+        status: editForm.status
+      });
+      showToast(`Book "${editForm.title}" updated successfully.`, "success");
+      setIsEditing(false);
+      setSelectedBook(res.data.book);
+      if (onBookUpdated) onBookUpdated();
+    } catch (error) {
+      console.error("Failed to update book:", error);
+      showToast(error.response?.data?.message || "Failed to update book.", "error");
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const handleArchive = async () => {
@@ -418,7 +472,7 @@ function Catalog({
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-              <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "14px", alignItems: "center", minWidth: 0 }}>
                 {selectedBook.coverUrl ? (
                   <img
                     src={selectedBook.coverUrl}
@@ -437,11 +491,101 @@ function Catalog({
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={() => setSelectedBook(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedBook(null);
+                  setIsEditing(false);
+                }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}
+              >
                 <X size={22} />
               </button>
             </div>
 
+            {isEditing ? (
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
+                background: "var(--bg-base)", padding: "16px", borderRadius: "12px", border: "1px solid var(--border)", marginBottom: "20px"
+              }}>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>TITLE *</label>
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={(e) => handleEditChange("title", e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>ISBN</label>
+                  <input
+                    type="text"
+                    value={editForm.isbn}
+                    onChange={(e) => handleEditChange("isbn", e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>AUTHOR</label>
+                  <input
+                    type="text"
+                    value={editForm.author}
+                    onChange={(e) => handleEditChange("author", e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>CATEGORY</label>
+                  <input
+                    type="text"
+                    value={editForm.category}
+                    onChange={(e) => handleEditChange("category", e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>PUBLISHER</label>
+                  <input
+                    type="text"
+                    value={editForm.publisher}
+                    onChange={(e) => handleEditChange("publisher", e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>PUBLICATION YEAR</label>
+                  <input
+                    type="number"
+                    value={editForm.publicationYear}
+                    onChange={(e) => handleEditChange("publicationYear", e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>SHELF LOCATION</label>
+                  <input
+                    type="text"
+                    value={editForm.shelf}
+                    onChange={(e) => handleEditChange("shelf", e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>STATUS</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => handleEditChange("status", e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                  >
+                    <option value="available">Available</option>
+                    <option value="borrowed">Borrowed</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="reserved">Reserved</option>
+                  </select>
+                </div>
+              </div>
+            ) : (
             <div style={{
               display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
               background: "var(--bg-base)", padding: "16px", borderRadius: "12px", border: "1px solid var(--border)", marginBottom: "20px"
@@ -505,17 +649,40 @@ function Catalog({
                 </span>
               </div>
             </div>
+            )}
 
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-              {canArchive && (
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+              {canArchive && !isEditing && (
                 <button type="button" className="btn btn-secondary" onClick={handleArchive}>
                   <Archive size={17} />
                   Archive Book
                 </button>
               )}
-              <button type="button" className="btn btn-secondary" onClick={() => setSelectedBook(null)}>
-                Close Details
-              </button>
+              {canEdit && !isEditing && (
+                <button type="button" className="btn btn-primary" onClick={startEditing}>
+                  <Pencil size={17} />
+                  Edit Book
+                </button>
+              )}
+              {isEditing ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleEditSave}
+                    disabled={savingEdit}
+                  >
+                    {savingEdit ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="btn btn-secondary" onClick={() => setSelectedBook(null)}>
+                  Close Details
+                </button>
+              )}
             </div>
           </div>
         </div>

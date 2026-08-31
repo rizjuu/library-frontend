@@ -7,6 +7,7 @@ import Circulation from "./Circulation";
 import AddBook from "./AddBook";
 import ImportBooks from "./ImportBooks";
 import Weeding from "./Weeding";
+import Reports from "./Reports";
 import BarcodeGenerator from "./BarcodeGenerator";
 import Profile from "./Profile";
 import PatronManagement from "../components/PatronManagement";
@@ -147,13 +148,15 @@ function AdminDashboard() {
             loading={loadingBooks}
             onNavigateToAddBook={() => setActiveTab("add-book")}
             canArchive={true}
+            canEdit={true}
+            onBookUpdated={handleRefreshAll}
             onBookArchived={fetchBooks}
             showToast={showToast}
           />
         )}
 
         {activeTab === "generate-barcode" && (
-          <BarcodeGenerator showToast={showToast} onBookAssigned={handleRefreshAll} />
+          <BarcodeGenerator showToast={showToast} />
         )}
 
         {activeTab === "circulation" && (
@@ -186,6 +189,8 @@ function AdminDashboard() {
         {activeTab === "users" && (
           <PatronManagement showToast={showToast} />
         )}
+
+        {activeTab === "reports" && <Reports showToast={showToast} />}
 
         {activeTab === "weeding" && <Weeding />}
 
