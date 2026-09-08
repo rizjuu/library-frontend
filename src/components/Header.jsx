@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Bell, Sun, Moon, Menu, ChevronDown, LogOut, User } from "lucide-react";
+import { Bell, Sun, Moon, Menu, ChevronDown, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { getPageHeaderInfo } from "../utils/navigationConfig";
 
 export default function Header({
   theme = "light",
   onToggleTheme = () => {},
   onToggleMobileMenu = () => {},
+  activeTab = "dashboard",
 }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -43,6 +45,7 @@ export default function Header({
   const displayRole = user?.role
     ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
     : "Member";
+  const pageInfo = getPageHeaderInfo(activeTab, user?.role, user);
 
   return (
     <header className="top-header">
@@ -55,14 +58,9 @@ export default function Header({
         >
           <Menu size={20} className="w-5 h-5" />
         </button>
-
-        <div className="header-search">
-          <Search size={20} className="header-search-icon w-5 h-5" />
-          <input
-            type="text"
-            className="header-search-input"
-            placeholder="Search books, patrons, transactions..."
-          />
+        <div className="header-page-title">
+          <span className="header-page-category">{pageInfo.category}</span>
+          <span className="header-page-name">{pageInfo.title}</span>
         </div>
       </div>
 

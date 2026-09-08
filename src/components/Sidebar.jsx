@@ -1,18 +1,7 @@
-import {
-  Home,
-  BookOpen,
-  Repeat,
-  BarChart3,
-  User,
-  QrCode,
-  X,
-  LogOut,
-  Users,
-  CloudDownload,
-  Archive,
-} from "lucide-react";
+import { X, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { getSidebarCategories } from "../utils/navigationConfig";
 
 export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
   const { user, logout } = useAuth();
@@ -35,28 +24,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
   const isAdmin = user?.role === "admin";
   const isStaff = user?.role === "staff";
 
-  // Build nav items dynamically based on role
-  const navItems = [
-    { id: "dashboard", label: "Home", icon: Home },
-    { id: "books", label: "Catalog", icon: BookOpen },
-    { id: "circulation", label: "Circulation", icon: Repeat },
-    { id: "import-books", label: "Open Library Import", icon: CloudDownload },
-    { id: "reports", label: "Reports", icon: BarChart3 },
-  ];
-
-  if (isAdmin || isStaff) {
-    navItems.splice(3, 0,
-      { id: "generate-barcode", label: "Generate Barcode", icon: QrCode },
-      { id: "add-book", label: "Add New Book", icon: BookOpen }
-    );
-  }
-
-  if (isAdmin) {
-    navItems.push({ id: "users", label: "User Management", icon: Users });
-    navItems.push({ id: "weeding", label: "Weeding", icon: Archive });
-  }
-
-  navItems.push({ id: "my-info", label: "My Info", icon: User });
+  const categories = getSidebarCategories(user?.role);
 
   const displayName = user?.name || (isAdmin ? "Administrator" : isStaff ? "Library Staff" : "User");
   const displayRole = user?.role
@@ -89,26 +57,31 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
 
       {/* Navigation items */}
       <nav className="sidebar-nav">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
+        {categories.map((category) => (
+          <div className="sidebar-category" key={category.id}>
+            <div className="sidebar-category-title">{category.title}</div>
+            {category.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
 
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={`sidebar-btn ${isActive ? "active" : ""}`}
-              onClick={() => onTabChange(item.id)}
-              title={item.label}
-              aria-label={item.label}
-            >
-              <span className="sidebar-btn-icon">
-                <Icon size={20} className="w-5 h-5" />
-              </span>
-              <span className="sidebar-btn-label">{item.label}</span>
-            </button>
-          );
-        })}
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`sidebar-btn ${isActive ? "active" : ""}`}
+                  onClick={() => onTabChange(item.id)}
+                  title={item.label}
+                  aria-label={item.label}
+                >
+                  <span className="sidebar-btn-icon">
+                    <Icon size={20} className="w-5 h-5" />
+                  </span>
+                  <span className="sidebar-btn-label">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       <div className="sidebar-divider" />

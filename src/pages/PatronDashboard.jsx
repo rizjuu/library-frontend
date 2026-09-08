@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
+import Sidebar from "../components/Sidebar";
 import ToastContainer from "../components/ToastContainer";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
@@ -11,22 +12,13 @@ import {
   Clock,
   CheckSquare,
   Search,
-  User,
   History,
   Megaphone,
-  Library,
-  Menu,
-  X,
-  LogOut,
-  Sparkles,
-  Barcode,
-  Calendar,
-  AlertCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 function PatronDashboard() {
-  const { user, logout, theme, toggleTheme } = useAuth();
+  const { user, theme, toggleTheme } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [books, setBooks] = useState([]);
@@ -150,17 +142,7 @@ function PatronDashboard() {
         ? "Due today"
         : `In ${nextDueDays} day${nextDueDays === 1 ? "" : "s"}`;
 
-  const getInitials = (name) => {
-    if (!name) return "P";
-    const parts = name.trim().split(" ");
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
   const displayName = user?.name || "Library Patron";
-  const displayEmail = user?.email || "patron@example.com";
 
   const categories = Array.from(
     new Set(books.map((b) => b.category).filter(Boolean))
@@ -181,14 +163,6 @@ function PatronDashboard() {
     return matchesQ && matchesCat;
   });
 
-  const navItems = [
-    { id: "dashboard", label: "My Overview", icon: BookOpen },
-    { id: "books", label: "Browse Catalog", icon: Search },
-    { id: "my-loans", label: "My Borrowed Books", icon: BookmarkCheck },
-    { id: "history", label: "Borrowing History", icon: History },
-    { id: "my-info", label: "My Profile", icon: User },
-  ];
-
   return (
     <div className="app-shell">
       {/* Mobile Drawer Backdrop */}
@@ -202,92 +176,22 @@ function PatronDashboard() {
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} />
 
-      {/* Patron Sidebar */}
-      <aside className={`sidebar ${mobileSidebarOpen ? "mobile-open" : ""}`}>
-        <div className="sidebar-header-brand">
-          <div className="sidebar-logo-icon" title="MOPL Library System">
-            <img src="/logo.png" alt="MOPL Library System logo" />
-          </div>
-          <div className="sidebar-brand-text">
-            <span className="sidebar-brand-title">MOPL</span>
-            <span className="sidebar-brand-name">Patron Portal</span>
-          </div>
-          {mobileSidebarOpen && (
-            <button
-              type="button"
-              className="btn-icon-only"
-              onClick={() => setMobileSidebarOpen(false)}
-              style={{ marginLeft: "auto", width: "32px", height: "32px" }}
-              aria-label="Close Sidebar"
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
-
-        <nav className="sidebar-nav">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={`sidebar-btn ${isActive ? "active" : ""}`}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setMobileSidebarOpen(false);
-                }}
-              >
-                <span className="sidebar-btn-icon">
-                  <Icon size={20} />
-                </span>
-                <span className="sidebar-btn-label">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-divider" />
-
-        <div className="sidebar-footer-info" style={{ justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", overflow: "hidden" }}>
-            <div className="sidebar-user-avatar">{getInitials(displayName)}</div>
-            <div className="sidebar-user-details" style={{ overflow: "hidden" }}>
-              <span className="sidebar-user-name" style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                {displayName}
-              </span>
-              <span className="sidebar-user-role">Patron</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={logout}
-            title="Sign Out"
-            aria-label="Sign Out"
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "oklch(0.75 0.03 255)",
-              cursor: "pointer",
-              padding: "6px",
-              borderRadius: "var(--radius-md, 6px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <LogOut size={18} />
-          </button>
-        </div>
-      </aside>
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setMobileSidebarOpen(false);
+        }}
+        isOpen={mobileSidebarOpen}
+        onClose={() => setMobileSidebarOpen(false)}
+      />
 
       {/* Top Header Bar */}
       <Header
         theme={theme}
         onToggleTheme={toggleTheme}
         onToggleMobileMenu={() => setMobileSidebarOpen(true)}
+        activeTab={activeTab}
       />
 
       {/* Main Content Area */}

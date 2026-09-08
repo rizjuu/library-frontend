@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import api from "../api";
 import {
   BookOpen,
   Search,
@@ -28,6 +29,9 @@ export default function Landing() {
   const [searchQuery, setSearchQuery] = useState("");
   const [previewIndex, setPreviewIndex] = useState(null);
   const [heroImageIndex, setHeroImageIndex] = useState(0);
+  const [libraryBooks, setLibraryBooks] = useState([]);
+  const [bookPreviewIndex, setBookPreviewIndex] = useState(0);
+  const [loadingBooks, setLoadingBooks] = useState(true);
 
   const handleGetStarted = () => {
     if (user) {
@@ -135,6 +139,26 @@ export default function Landing() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchLibraryBooks = async () => {
+      try {
+        const response = await api.get("/books");
+        if (isMounted) setLibraryBooks(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("Failed to load landing page catalog preview:", error);
+      } finally {
+        if (isMounted) setLoadingBooks(false);
+      }
+    };
+
+    fetchLibraryBooks();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const categories = [
     { id: "everything", label: "Everything" },
     { id: "fiction", label: "Fiction & Literature" },
@@ -143,6 +167,45 @@ export default function Landing() {
     { id: "filipiniana", label: "Filipiniana" },
     { id: "children", label: "Children's Corner" },
   ];
+
+  const filteredLibraryBooks = libraryBooks.filter((book) => {
+    const query = searchQuery.trim().toLowerCase();
+    const searchableText = [book.title, book.author, book.category].filter(Boolean).join(" ").toLowerCase();
+    const matchesSearch = !query || searchableText.includes(query);
+    const category = String(book.category || "").toLowerCase();
+    const matchesCategory =
+      activeCategory === "everything" ||
+      (activeCategory === "fiction" && /(fiction|literature|novel|poetry)/.test(category)) ||
+      (activeCategory === "history" && /(history|culture|historical)/.test(category)) ||
+      (activeCategory === "science" && /(science|technology|tech|computer)/.test(category)) ||
+      (activeCategory === "filipiniana" && /filipiniana/.test(category)) ||
+      (activeCategory === "children" && /(children|child|juvenile|young adult)/.test(category));
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const visibleBookCount = Math.min(5, filteredLibraryBooks.length);
+  const visibleBooks = visibleBookCount
+    ? Array.from({ length: visibleBookCount }, (_, index) => (
+        filteredLibraryBooks[(bookPreviewIndex + index) % filteredLibraryBooks.length]
+      ))
+    : [];
+
+  const advanceBookPreview = useCallback(() => {
+    if (filteredLibraryBooks.length > 1) {
+      setBookPreviewIndex((current) => (current + 1) % filteredLibraryBooks.length);
+    }
+  }, [filteredLibraryBooks.length]);
+
+  useEffect(() => {
+    setBookPreviewIndex(0);
+  }, [activeCategory, searchQuery]);
+
+  useEffect(() => {
+    if (filteredLibraryBooks.length <= 1) return undefined;
+    const interval = setInterval(advanceBookPreview, 7000);
+    return () => clearInterval(interval);
+  }, [advanceBookPreview, filteredLibraryBooks.length]);
 
   return (
     <div className="landing-container">
@@ -302,6 +365,47 @@ export default function Landing() {
               {cat.label}
             </button>
           ))}
+        </div>
+
+        <div className="catalog-showcase" aria-live="polite">
+          <div className="catalog-showcase-heading">
+            <div>
+              <span className="catalog-showcase-kicker">From the shelves</span>
+              <h3>Explore the collection</h3>
+            </div>
+            <button
+              type="button"
+              className="catalog-showcase-next"
+              onClick={advanceBookPreview}
+              disabled={filteredLibraryBooks.length <= 1}
+              aria-label="Show next books"
+              title="Show next books"
+            >
+              <span>Next</span>
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+          {loadingBooks ? (
+            <div className="catalog-showcase-empty">Loading books from the library catalog...</div>
+          ) : visibleBooks.length > 0 ? (
+            <div className="catalog-showcase-track">
+              {visibleBooks.map((book, index) => (
+                <div className="catalog-book-preview" key={`${book._id || book.title}-${index}`}>
+                  <div className="catalog-book-cover">
+                    {book.coverUrl ? (
+                      <img src={book.coverUrl} alt="" />
+                    ) : (
+                      <BookOpen size={34} aria-hidden="true" />
+                    )}
+                  </div>
+                  <p title={book.title}>{book.title}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="catalog-showcase-empty">No books match this search or collection.</div>
+          )}
         </div>
       </section>
 

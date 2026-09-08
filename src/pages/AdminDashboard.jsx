@@ -119,6 +119,7 @@ function AdminDashboard() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onToggleMobileMenu={() => setMobileSidebarOpen(true)}
+        activeTab={activeTab}
       />
 
       {/* Main Content Area */}
