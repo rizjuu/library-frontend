@@ -127,8 +127,7 @@ export default function Landing() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("is-visible");
-          } else {
-            entry.target.classList.remove("is-visible");
+            observer.unobserve(entry.target);
           }
         });
       },
@@ -367,7 +366,7 @@ export default function Landing() {
           ))}
         </div>
 
-        <div className="catalog-showcase" aria-live="polite">
+        <div className="catalog-showcase landing-reveal" aria-live="polite">
           <div className="catalog-showcase-heading">
             <div>
               <span className="catalog-showcase-kicker">From the shelves</span>
@@ -406,6 +405,34 @@ export default function Landing() {
           ) : (
             <div className="catalog-showcase-empty">No books match this search or collection.</div>
           )}
+        </div>
+      </section>
+
+      {/* LIBRARY OFFICE MISSION & VISION SECTION */}
+      <section id="library-office" className="library-office-section landing-reveal">
+        <div className="library-office-wrapper">
+          <div className="library-office-heading">
+            <span className="section-eyebrow">Our Purpose</span>
+            <h2 className="section-main-title">
+              Library <span>Office.</span>
+            </h2>
+          </div>
+
+          <div className="library-office-grid">
+            <article className="library-office-panel landing-reveal">
+              <h3>Mission</h3>
+              <p>
+                We are committed to provide a place where people have easy access to information resources and stock of knowledge which are the key factors toward an improved quality of life and economic progress of Misamis Oriental.
+              </p>
+            </article>
+
+            <article className="library-office-panel landing-reveal">
+              <h3>Vision</h3>
+              <p>
+                We envisioned a modern dynamic Provincial Library that can provide programs and services which are responsive to the varied and changing needs of the community of Misamis Oriental.
+              </p>
+            </article>
+          </div>
         </div>
       </section>
 
