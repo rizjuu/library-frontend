@@ -38,8 +38,8 @@ export default function ProtectedRoute({ allowedRoles, children }) {
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
-        background: "var(--bg-base, #f8fafc)",
-        color: "var(--text-primary, #0f172a)",
+        background: "var(--bg-base, #FAF7F2)",
+        color: "var(--text-primary, #4B3832)",
         fontFamily: "var(--font-sans, sans-serif)"
       }}>
         <div style={{ textAlign: "center" }}>
@@ -50,7 +50,7 @@ export default function ProtectedRoute({ allowedRoles, children }) {
           }}>
             📚
           </div>
-          <p style={{ fontWeight: 600, color: "var(--text-muted, #64748b)" }}>Loading session...</p>
+          <p style={{ fontWeight: 600, color: "var(--text-muted, #8C7768)" }}>Loading session...</p>
         </div>
       </div>
     );

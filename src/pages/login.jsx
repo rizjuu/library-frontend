@@ -151,7 +151,7 @@ function Login({ overlay = false }) {
         </div>
 
         <div className="copyright">
-          <Link to="/" style={{ color: "#94a3b8", textDecoration: "underline", marginRight: "1rem" }}>
+          <Link to="/" style={{ color: "#DCC7AA", textDecoration: "underline", marginRight: "1rem" }}>
             ← Back to Landing Page
           </Link>
           © 2026 MOPL · Capstone Project

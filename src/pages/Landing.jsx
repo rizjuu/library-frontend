@@ -303,7 +303,7 @@ export default function Landing() {
                 </div>
                 <div>
                   <div style={{ fontSize: "14px", fontWeight: 800 }}>MOPL Library Showcase</div>
-                  <div style={{ fontSize: "11px", color: "#cbd5e1" }}>{galleryPhotos[heroImageIndex].title}</div>
+                  <div style={{ fontSize: "11px", color: "#DCC7AA" }}>{galleryPhotos[heroImageIndex].title}</div>
                 </div>
               </div>
             </div>
@@ -340,11 +340,11 @@ export default function Landing() {
           </div>
 
           <div className="toolbar-search" style={{ width: "340px", position: "relative" }}>
-            <Search size={18} className="toolbar-search-icon" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+            <Search size={18} className="toolbar-search-icon" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#8C7768" }} />
             <input
               type="text"
               className="toolbar-search-input"
-              style={{ width: "100%", height: "46px", paddingLeft: "42px", borderRadius: "14px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+              style={{ width: "100%", height: "46px", paddingLeft: "42px", borderRadius: "14px", border: "1px solid #DCC7AA", fontSize: "13px" }}
               placeholder="Search books, authors, or subjects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -445,7 +445,7 @@ export default function Landing() {
               Photo <span>Gallery.</span>
             </h2>
           </div>
-          <p style={{ color: "#64748b", fontSize: "14px", maxWidth: "420px" }}>
+          <p style={{ color: "#8C7768", fontSize: "14px", maxWidth: "420px" }}>
             Click on any picture frame below to preview full-screen and navigate through library photos.
           </p>
         </div>
@@ -532,7 +532,7 @@ export default function Landing() {
               <span className="lightbox-footer-text">
                 {galleryPhotos[previewIndex].sub}
               </span>
-              <span style={{ fontSize: "12px", color: "#94a3b8" }}>
+              <span style={{ fontSize: "12px", color: "#DCC7AA" }}>
                 Use Left / Right arrow keys to navigate
               </span>
             </div>

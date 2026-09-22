@@ -21,8 +21,8 @@ function BarcodeGenerator({ showToast = () => {} }) {
         fontSize: 16,
         height: 72,
         margin: 12,
-        lineColor: "#172033",
-        background: "#ffffff"
+        lineColor: "#4B3832",
+        background: "#FFFDF7"
       });
     });
   }, [items]);
@@ -84,7 +84,7 @@ function BarcodeGenerator({ showToast = () => {} }) {
 
         <section className="circ-panel">
           <div className="circ-panel-head"><div className="circ-panel-icon return"><Barcode size={24} /></div><div><h3 className="circ-panel-title">Barcode Preview</h3><p className="circ-panel-desc">Preview the full batch and export it on letter-size paper.</p></div></div>
-          {items.length > 0 ? <><div style={{ display: "grid", gap: "14px", maxHeight: "520px", overflowY: "auto" }}>{items.map((item) => <div key={item.barcode} style={{ background: "#fff", padding: "18px", borderRadius: "8px", textAlign: "center", border: `1px solid ${selectedItem === item.barcode ? "var(--color-primary)" : "var(--border)"}`, cursor: "pointer" }} onClick={() => setSelectedItem(item.barcode)}><p style={{ margin: "0 0 8px", color: "#172033", fontWeight: 700 }}>{item.accessionNumber}</p><svg ref={(element) => { barcodeRefs.current[item.barcode] = element; }} aria-label={`Barcode ${item.barcode}`} /></div>)}</div><div className="form-actions" style={{ marginTop: "18px" }}><button type="button" className="btn btn-primary" onClick={openPrintableBatch}><Download size={18} /> Download All as PDF</button><button type="button" className="btn btn-secondary" onClick={openPrintableBatch}><Printer size={18} /> Print All</button></div></> : <div className="empty-state"><Barcode size={42} className="empty-state-icon" /><h3 className="empty-state-title">No Barcodes Generated</h3><p className="empty-state-desc">Generate a batch to preview its barcodes.</p></div>}
+          {items.length > 0 ? <><div style={{ display: "grid", gap: "14px", maxHeight: "520px", overflowY: "auto" }}>{items.map((item) => <div key={item.barcode} style={{ background: "var(--bg-surface)", padding: "18px", borderRadius: "8px", textAlign: "center", border: `1px solid ${selectedItem === item.barcode ? "var(--color-primary)" : "var(--border)"}`, cursor: "pointer" }} onClick={() => setSelectedItem(item.barcode)}><p style={{ margin: "0 0 8px", color: "#4B3832", fontWeight: 700 }}>{item.accessionNumber}</p><svg ref={(element) => { barcodeRefs.current[item.barcode] = element; }} aria-label={`Barcode ${item.barcode}`} /></div>)}</div><div className="form-actions" style={{ marginTop: "18px" }}><button type="button" className="btn btn-primary" onClick={openPrintableBatch}><Download size={18} /> Download All as PDF</button><button type="button" className="btn btn-secondary" onClick={openPrintableBatch}><Printer size={18} /> Print All</button></div></> : <div className="empty-state"><Barcode size={42} className="empty-state-icon" /><h3 className="empty-state-title">No Barcodes Generated</h3><p className="empty-state-desc">Generate a batch to preview its barcodes.</p></div>}
         </section>
       </div>
     </motion.div>

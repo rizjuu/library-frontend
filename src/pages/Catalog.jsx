@@ -179,18 +179,21 @@ function Catalog({
   };
 
   const handleArchive = async () => {
-    if (!selectedBook || !window.confirm(`Archive "${selectedBook.title}"? The record will be kept and removed from the active catalog.`)) {
-      return;
-    }
+    if (!selectedBook) return;
+    const reason = window.prompt(
+      `Weed "${selectedBook.title}" from catalog?\nPlease enter the reason for weeding (e.g., Damaged / Physical wear, Outdated edition, Lost, Duplicate):`,
+      "Damaged / Physical wear"
+    );
+    if (reason === null) return;
 
     try {
-      await api.patch(`/books/${selectedBook._id}/archive`);
-      showToast(`Book "${selectedBook.title}" archived successfully.`, "success");
+      await api.patch(`/books/${selectedBook._id}/archive`, { reason: reason.trim() || "Physical wear / Damaged" });
+      showToast(`Book "${selectedBook.title}" weeded successfully.`, "success");
       setSelectedBook(null);
       if (onBookArchived) onBookArchived();
     } catch (error) {
-      console.error("Failed to archive book:", error);
-      showToast(error.response?.data?.message || "Failed to archive book.", "error");
+      console.error("Failed to weed book:", error);
+      showToast(error.response?.data?.message || "Failed to weed book.", "error");
     }
   };
 
@@ -655,7 +658,7 @@ function Catalog({
               {canArchive && !isEditing && (
                 <button type="button" className="btn btn-secondary" onClick={handleArchive}>
                   <Archive size={17} />
-                  Archive Book
+                  Weed Book
                 </button>
               )}
               {canEdit && !isEditing && (

@@ -106,7 +106,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
           style={{
             background: "transparent",
             border: "none",
-            color: "oklch(0.75 0.03 255)",
+            color: "var(--palette-beige, #DCC7AA)",
             cursor: "pointer",
             padding: "6px",
             borderRadius: "6px",
@@ -116,7 +116,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
             transition: "all 0.2s",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.75 0.03 255)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--palette-beige, #DCC7AA)")}
         >
           <LogOut size={18} />
         </button>

@@ -131,10 +131,10 @@ export default function Header({
                 top: "calc(100% + 8px)",
                 right: 0,
                 width: "200px",
-                background: "var(--bg-surface, #ffffff)",
-                border: "1px solid var(--border, #e2e8f0)",
+                background: "var(--bg-surface, #FFFDF7)",
+                border: "1px solid var(--border, #DCC7AA)",
                 borderRadius: "var(--radius-xl, 12px)",
-                boxShadow: "var(--shadow-lg, 0 10px 25px -5px rgba(0,0,0,0.1))",
+                boxShadow: "var(--shadow-lg, 0 10px 25px -5px rgba(75,56,50,0.1))",
                 padding: "8px",
                 zIndex: 100,
               }}
@@ -142,14 +142,14 @@ export default function Header({
               <div
                 style={{
                   padding: "8px 12px",
-                  borderBottom: "1px solid var(--border-subtle, #f1f5f9)",
+                  borderBottom: "1px solid var(--border-subtle, #F5E6CA)",
                   marginBottom: "4px",
                 }}
               >
-                <p style={{ fontWeight: 700, fontSize: "13px", color: "var(--text-primary, #0f172a)", margin: 0 }}>
+                <p style={{ fontWeight: 700, fontSize: "13px", color: "var(--text-primary, #4B3832)", margin: 0 }}>
                   {displayName}
                 </p>
-                <p style={{ fontSize: "11px", color: "var(--text-muted, #64748b)", margin: "2px 0 0" }}>
+                <p style={{ fontSize: "11px", color: "var(--text-muted, #8C7768)", margin: "2px 0 0" }}>
                   {user?.email || user?.username || displayRole}
                 </p>
               </div>

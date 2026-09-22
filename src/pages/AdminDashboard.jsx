@@ -193,7 +193,9 @@ function AdminDashboard() {
 
         {activeTab === "reports" && <Reports showToast={showToast} />}
 
-        {activeTab === "weeding" && <Weeding />}
+        {activeTab === "weeding" && (
+          <Weeding showToast={showToast} onBookRestored={handleRefreshAll} />
+        )}
 
         {activeTab === "my-info" && <Profile showToast={showToast} />}
       </main>
