@@ -62,7 +62,7 @@ function AdminDashboard() {
         announcements: res.data.announcements || []
       });
     } catch (err) {
-      console.error("Failed to load dashboard stats from MongoDB:", err);
+      console.error("Failed to load dashboard:", err);
     } finally {
       setLoadingStats(false);
     }

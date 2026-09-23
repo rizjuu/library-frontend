@@ -103,9 +103,9 @@ function Dashboard({
         <div className="page-title-group">
           <span className="page-date-kicker">📅 {currentDateFormatted}</span>
           <h1 className="page-title">
-            Library Overview <span role="img" aria-label="waving hand">📊</span>
+          <span role="img" aria-label="waving hand"></span>
           </h1>
-          <p className="page-subtitle">Real-time statistics connected directly to live MongoDB collections.</p>
+          <p className="page-subtitle">Real-time statistics, collections.</p>
         </div>
 
         {/* Action Toolbar */}
@@ -162,7 +162,7 @@ function Dashboard({
               {loading ? <Loader2 size={24} className="animate-spin" /> : formatNum(totalBooks)}
             </div>
             <div className="stat-change up">
-              <span>Live MongoDB Query</span>
+              <span>Books in catalog</span>
             </div>
           </div>
         </div>
@@ -273,7 +273,7 @@ function Dashboard({
                 {recentTransactions.length === 0 ? (
                   <tr>
                     <td colSpan="5" style={{ textAlign: "center", padding: "24px", color: "var(--text-muted)" }}>
-                      {loading ? "Loading transactions from MongoDB..." : "No recent transactions found in MongoDB."}
+                      {loading ? "Loading transactions from MongoDB..." : "No recent transactions"}
                     </td>
                   </tr>
                 ) : (
@@ -396,7 +396,7 @@ function Dashboard({
                     disabled={postingAnnouncement}
                     style={{ padding: "6px 12px", fontSize: "12px" }}
                   >
-                    {postingAnnouncement ? "Posting..." : "Post to MongoDB"}
+                    {postingAnnouncement ? "Posting..." : "Post"}
                   </button>
                 </div>
               </div>

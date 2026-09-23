@@ -666,7 +666,7 @@ export default function Landing() {
 
         <div className="footer-bottom-bar">
           <span>© 2026 Misamis Oriental Provincial Capitol Public Library. All rights reserved.</span>
-          <span>Web-Based Library Management System · Capstone Project</span>
+          <span>Web-Based Library Management System </span>
         </div>
       </footer>
     </div>

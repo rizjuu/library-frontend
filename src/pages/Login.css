@@ -351,6 +351,138 @@
   margin-top: 5px;
 }
 
+.login-title {
+  font-size: 26px;
+  margin-bottom: 8px;
+  color: #1a5c85;
+  font-weight: 700;
+}
+
+.login-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+
+.login-submit-btn {
+  height: 40px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 6px;
+  background: #185a86;
+  color: white;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: auto;
+  box-shadow: 0 2px 6px rgba(24, 90, 134, 0.22);
+}
+
+.login-submit-btn:hover {
+  background: #134668;
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-submit-btn.full-width {
+  width: 100%;
+}
+
+.forgot-password-link {
+  background: none;
+  border: none;
+  color: #1b384f;
+  text-decoration: underline;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 2px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.forgot-password-link:hover {
+  color: #185a86;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 18px 0 16px;
+  color: #8C7768;
+  font-size: 12.5px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #E8DFD8;
+}
+
+.login-divider span {
+  padding: 0 10px;
+}
+
+.forgot-password-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.forgot-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+  margin-bottom: 14px;
+}
+
+.back-to-login-link {
+  background: none;
+  border: none;
+  color: #6F4E37;
+  text-decoration: underline;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 4px;
+  font-weight: 500;
+}
+
+.back-to-login-link:hover {
+  color: #4B3832;
+}
+
+.resend-container {
+  margin-top: 8px;
+}
+
+.resend-code-btn {
+  background: none;
+  border: none;
+  color: #185a86;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.resend-code-btn:hover {
+  color: #134668;
+}
+
+.reset-success-card {
+  padding: 8px 0;
+}
+
 .login-error {
   background: #fee2e2;
   color: #b91c1c;
@@ -515,8 +647,13 @@
     margin-bottom: 14px;
   }
 
-  .signin-button {
-    height: 42px;
+  .signin-button,
+  .login-submit-btn {
+    height: 40px;
     font-size: 13.5px;
+  }
+
+  .login-btn-row {
+    gap: 14px;
   }
 }

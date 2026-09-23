@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -8,13 +8,9 @@ import "./Login.css";
 
 function Login({ overlay = false }) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user, login } = useAuth();
 
   const closeLogin = () => navigate("/", { replace: true });
-
-  const initialTab = searchParams.get("tab") || "patron";
-  const [mode, setMode] = useState(initialTab);
 
   useEffect(() => {
     if (!user) return;
@@ -27,14 +23,23 @@ function Login({ overlay = false }) {
     navigate(dashboardRoute, { replace: true });
   }, [user, navigate]);
 
+  // Login form state
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handlePasswordLogin = async (e, expectedRole) => {
+  // Forgot password flow state
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1: request code, 2: reset password, 3: success
+  const [forgotIdentifier, setForgotIdentifier] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const handlePasswordLogin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -46,14 +51,7 @@ function Login({ overlay = false }) {
       });
 
       const { token, user: loggedUser } = response.data;
-
-      if (expectedRole && loggedUser.role !== expectedRole) {
-        setError(`This account is registered as ${loggedUser.role}. Please switch to the ${loggedUser.role.toUpperCase()} tab.`);
-        setLoading(false);
-        return;
-      }
-
-      login(loggedUser, token, rememberMe);
+      login(loggedUser, token, true);
 
       if (loggedUser.role === "admin") {
         navigate("/admin", { replace: true });
@@ -66,6 +64,69 @@ function Login({ overlay = false }) {
       setError(
         err.response?.data?.message ||
         "Authentication failed. Please check your credentials."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequestResetCode = async (e) => {
+    if (e) e.preventDefault();
+    setError("");
+    setSuccessMessage("");
+    setLoading(true);
+
+    try {
+      const response = await api.post("/auth/forgot-password", {
+        identifier: forgotIdentifier
+      });
+
+      let msg = response.data.message || "Verification code sent.";
+      if (response.data.devCode) {
+        msg += ` Code: ${response.data.devCode}`;
+      }
+      setSuccessMessage(msg);
+      setForgotStep(2);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        "Failed to request password reset code. Please check your username/email."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMessage("");
+
+    if (newPassword.length < 6) {
+      setError("New password must be at least 6 characters long.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match. Please re-enter.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await api.post("/auth/reset-password", {
+        identifier: forgotIdentifier,
+        code: resetCode,
+        newPassword
+      });
+
+      setSuccessMessage(response.data.message || "Password successfully reset!");
+      setForgotStep(3);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        "Failed to reset password. Please verify the code and try again."
       );
     } finally {
       setLoading(false);
@@ -154,7 +215,7 @@ function Login({ overlay = false }) {
           <Link to="/" style={{ color: "#DCC7AA", textDecoration: "underline", marginRight: "1rem" }}>
             ← Back to Landing Page
           </Link>
-          © 2026 MOPL · Capstone Project
+          © 2026 Misamis Oriental Provincial Capitol Public Library
         </div>
         </div>
 
@@ -172,179 +233,237 @@ function Login({ overlay = false }) {
             </button>
           )}
           <div className="login-container">
-          <h2>Library Sign In</h2>
-          <p className="login-description">
-            Select your account type to access the Misamis Oriental Provincial Capitol Public Library System.
-          </p>
-
-          {/* Role Navigation Tabs */}
-          <div className="login-tabs">
-            <button
-              className={mode === "patron" ? "active" : ""}
-              onClick={() => {
-                setMode("patron");
-                setError("");
-              }}
-            >
-              Patron (Gmail)
-            </button>
-            <button
-              className={mode === "staff" ? "active" : ""}
-              onClick={() => {
-                setMode("staff");
-                setError("");
-              }}
-            >
-              Staff
-            </button>
-            <button
-              className={mode === "admin" ? "active" : ""}
-              onClick={() => {
-                setMode("admin");
-                setError("");
-              }}
-            >
-              Admin
-            </button>
-          </div>
-
-          {error && <div className="login-error">{error}</div>}
-
-          {/* PATRON TAB — Google OAuth */}
-          {mode === "patron" && (
-            <div className="patron-google-section">
-              <div className="google-intro">
-                <div className="google-intro-icon">📚</div>
-                <h3>Welcome, Patron!</h3>
-                <p>
-                  Sign in with your Gmail account to access the library catalog,
-                  check book availability, and manage your borrowing history.
+            {!isForgotPassword ? (
+              <>
+                <h2 className="login-title">User Login</h2>
+                <p className="login-description">
+                  Enter your library credentials to access your account.
                 </p>
-              </div>
 
-              <div className="google-button-wrapper">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  size="large"
-                  width="380"
-                  text="continue_with"
-                  shape="rectangular"
-                  logo_alignment="left"
-                  theme="outline"
-                />
-              </div>
+                {error && <div className="login-error">{error}</div>}
 
-              {loading && (
-                <p className="google-loading-text">Signing you in...</p>
-              )}
-
-              <p className="field-hint" style={{ textAlign: "center", marginTop: "16px" }}>
-                Your Gmail account will be used to create your patron profile automatically.
-                No password needed.
-              </p>
-            </div>
-          )}
-
-          {/* STAFF TAB */}
-          {mode === "staff" && (
-            <form onSubmit={(e) => handlePasswordLogin(e, "staff")}>
-              <label>Staff Username</label>
-              <input
-                type="text"
-                placeholder="staff"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-
-              <label>Password</label>
-              <div className="password-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? "◉" : "◌"}
-                </button>
-              </div>
-
-              <div className="login-options">
-                <label className="remember">
+                <form onSubmit={handlePasswordLogin}>
+                  <label htmlFor="login-username">Username</label>
                   <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
+                    id="login-username"
+                    type="text"
+                    placeholder="Enter your username or email"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    autoFocus
                   />
-                  Remember me
-                </label>
-              </div>
 
-              <button
-                type="submit"
-                className="signin-button"
-                disabled={loading}
-              >
-                {loading ? "Signing in..." : "Sign in as Staff"}
-              </button>
-            </form>
-          )}
+                  <label htmlFor="login-password">Password</label>
+                  <div className="password-wrapper">
+                    <input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? "◉" : "◌"}
+                    </button>
+                  </div>
 
-          {/* ADMIN TAB */}
-          {mode === "admin" && (
-            <form onSubmit={(e) => handlePasswordLogin(e, "admin")}>
-              <label>Admin Username</label>
-              <input
-                type="text"
-                placeholder="admin"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
+                  <div className="login-btn-row">
+                    <button
+                      type="submit"
+                      className="login-submit-btn"
+                      disabled={loading}
+                    >
+                      {loading ? "Logging in..." : "Login"}
+                    </button>
 
-              <label>Password</label>
-              <div className="password-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? "◉" : "◌"}
-                </button>
-              </div>
+                    <button
+                      type="button"
+                      className="forgot-password-link"
+                      onClick={() => {
+                        setIsForgotPassword(true);
+                        setForgotStep(1);
+                        setError("");
+                        setSuccessMessage("");
+                        setForgotIdentifier(username || "");
+                      }}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                </form>
 
-              <div className="login-options">
-                <label className="remember">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
+                <div className="login-divider">
+                  <span>or continue with Google</span>
+                </div>
+
+                <div className="google-button-wrapper">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    size="large"
+                    width="380"
+                    text="continue_with"
+                    shape="rectangular"
+                    logo_alignment="left"
+                    theme="outline"
                   />
-                  Remember me
-                </label>
-              </div>
+                </div>
+              </>
+            ) : (
+              <div className="forgot-password-container">
+                <h2 className="login-title">Reset Password</h2>
+                <p className="login-description">
+                  {forgotStep === 1
+                    ? "Enter your registered username or email to receive a password reset verification code."
+                    : forgotStep === 2
+                      ? "Enter the 6-digit verification code sent to your account and choose a new password."
+                      : "Your password has been successfully reset."}
+                </p>
 
-              <button
-                type="submit"
-                className="signin-button admin-button"
-                disabled={loading}
-              >
-                {loading ? "Signing in..." : "Sign in as Admin"}
-              </button>
-            </form>
-          )}
+                {error && <div className="login-error">{error}</div>}
+                {successMessage && <div className="login-success">{successMessage}</div>}
+
+                {forgotStep === 1 && (
+                  <form onSubmit={handleRequestResetCode}>
+                    <label htmlFor="forgot-identifier">Username or Email</label>
+                    <input
+                      id="forgot-identifier"
+                      type="text"
+                      placeholder="Enter username or email address"
+                      value={forgotIdentifier}
+                      onChange={(e) => setForgotIdentifier(e.target.value)}
+                      required
+                      autoFocus
+                    />
+
+                    <div className="forgot-actions-row">
+                      <button
+                        type="submit"
+                        className="login-submit-btn"
+                        disabled={loading}
+                      >
+                        {loading ? "Sending..." : "Send Verification Code"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="back-to-login-link"
+                        onClick={() => {
+                          setIsForgotPassword(false);
+                          setError("");
+                          setSuccessMessage("");
+                        }}
+                      >
+                        Back to Login
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {forgotStep === 2 && (
+                  <form onSubmit={handleResetPassword}>
+                    <label htmlFor="reset-code">6-Digit Verification Code</label>
+                    <input
+                      id="reset-code"
+                      type="text"
+                      placeholder="e.g. 482910"
+                      value={resetCode}
+                      onChange={(e) => setResetCode(e.target.value.trim())}
+                      maxLength={6}
+                      required
+                      autoFocus
+                    />
+
+                    <label htmlFor="new-password">New Password</label>
+                    <div className="password-wrapper">
+                      <input
+                        id="new-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="At least 6 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? "◉" : "◌"}
+                      </button>
+                    </div>
+
+                    <label htmlFor="confirm-password">Confirm New Password</label>
+                    <input
+                      id="confirm-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Re-type new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+
+                    <div className="forgot-actions-row">
+                      <button
+                        type="submit"
+                        className="login-submit-btn"
+                        disabled={loading}
+                      >
+                        {loading ? "Saving..." : "Update Password"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="back-to-login-link"
+                        onClick={() => {
+                          setIsForgotPassword(false);
+                          setForgotStep(1);
+                          setError("");
+                          setSuccessMessage("");
+                        }}
+                      >
+                        Back to Login
+                      </button>
+                    </div>
+
+                    <div className="resend-container">
+                      <button
+                        type="button"
+                        className="resend-code-btn"
+                        onClick={handleRequestResetCode}
+                        disabled={loading}
+                      >
+                        Didn't receive code? Resend
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {forgotStep === 3 && (
+                  <div className="reset-success-card">
+                    <button
+                      type="button"
+                      className="login-submit-btn"
+                      style={{ width: "100%", marginTop: "16px" }}
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setForgotStep(1);
+                        setError("");
+                        setSuccessMessage("");
+                      }}
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
