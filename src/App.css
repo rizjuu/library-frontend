@@ -1487,3 +1487,118 @@
     margin-top: 28px;
   }
 }
+
+/* ============================================
+   CATALOG BOOKS PAGINATION (THEMED COFFEE & CREAM)
+   ============================================ */
+.catalog-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 36px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.pagination-pages-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn-page {
+  width: 42px;
+  height: 42px;
+  border-radius: 9px;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #EADBCA;
+  color: var(--palette-espresso, #4B3832);
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.pagination-btn-page:hover:not(.active) {
+  background-color: #DCC7AA;
+  transform: translateY(-1px);
+}
+
+.pagination-btn-page.active {
+  background-color: var(--palette-espresso, #4B3832);
+  color: #FFFDF7;
+  font-weight: 600;
+  cursor: default;
+  box-shadow: 0 3px 8px rgba(75, 56, 50, 0.22);
+}
+
+.pagination-ellipsis {
+  width: 28px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #8C7768);
+  font-weight: 600;
+  font-size: 15px;
+  user-select: none;
+}
+
+.pagination-btn-nav {
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 9px;
+  border: 2px solid var(--palette-espresso, #4B3832);
+  background: transparent;
+  color: var(--palette-espresso, #4B3832);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.pagination-btn-nav:hover:not(:disabled) {
+  background-color: rgba(75, 56, 50, 0.08);
+  transform: translateY(-1px);
+}
+
+.pagination-btn-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #DCC7AA;
+  color: var(--text-muted, #8C7768);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .catalog-pagination {
+    gap: 6px;
+    margin-top: 24px;
+  }
+
+  .pagination-btn-page {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+    border-radius: 7px;
+  }
+
+  .pagination-btn-nav {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 14px;
+    border-radius: 7px;
+  }
+}

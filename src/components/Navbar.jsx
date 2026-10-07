@@ -13,7 +13,7 @@ function Navbar({ activeTab, onTabChange }) {
       <div className="navbar-container">
         <a href="#dashboard" className="navbar-brand" onClick={(e) => { e.preventDefault(); onTabChange("dashboard"); }}>
           <div className="navbar-brand-icon">
-            <img src="/logo.png" alt="Library Hub logo" />
+            <img src="/logo.webp" alt="Library Hub logo" />
           </div>
           <span>Library Hub</span>
         </a>

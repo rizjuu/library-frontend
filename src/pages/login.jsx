@@ -173,7 +173,7 @@ function Login({ overlay = false }) {
         <Link to="/" className="library-brand-link">
           <div className="library-brand">
             <img
-              src="/logo.png"
+              src="/logo.webp"
               alt="Misamis Oriental Provincial Capitol Public Library logo"
               className="brand-icon"
             />

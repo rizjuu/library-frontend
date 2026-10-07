@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -9,9 +10,44 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Login from "./pages/login";
-import AdminDashboard from "./pages/AdminDashboard";
-import StaffDashboard from "./pages/StaffDashboard";
-import PatronDashboard from "./pages/PatronDashboard";
+
+// Code-split heavy dashboard views to keep initial landing bundle minimal
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const StaffDashboard = lazy(() => import("./pages/StaffDashboard"));
+const PatronDashboard = lazy(() => import("./pages/PatronDashboard"));
+
+function PageLoadingFallback() {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#FAF6EE",
+        color: "#4B3832",
+        fontFamily: "system-ui, sans-serif",
+        gap: "12px"
+      }}
+    >
+      <div
+        style={{
+          width: "36px",
+          height: "36px",
+          border: "3px solid #DCC7AA",
+          borderTopColor: "#4B3832",
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite"
+        }}
+      />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <span style={{ fontSize: "14px", fontWeight: 500, opacity: 0.85 }}>
+        Loading dashboard...
+      </span>
+    </div>
+  );
+}
 
 function App() {
   return (
@@ -37,7 +73,9 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminDashboard />
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <AdminDashboard />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -47,7 +85,9 @@ function App() {
             path="/staff"
             element={
               <ProtectedRoute allowedRoles={["staff"]}>
-                <StaffDashboard />
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <StaffDashboard />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -57,7 +97,9 @@ function App() {
             path="/patron"
             element={
               <ProtectedRoute allowedRoles={["patron"]}>
-                <PatronDashboard />
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <PatronDashboard />
+                </Suspense>
               </ProtectedRoute>
             }
           />

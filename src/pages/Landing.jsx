@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
@@ -31,6 +32,7 @@ export default function Landing() {
   const [heroImageIndex, setHeroImageIndex] = useState(0);
   const [libraryBooks, setLibraryBooks] = useState([]);
   const [bookPreviewIndex, setBookPreviewIndex] = useState(0);
+  const [selectedCatalogBook, setSelectedCatalogBook] = useState(null);
   const [loadingBooks, setLoadingBooks] = useState(true);
 
   const handleGetStarted = () => {
@@ -53,37 +55,37 @@ export default function Landing() {
       id: 1,
       title: "Main Reading Hall",
       sub: "Spacious study tables & quiet reading environment",
-      src: "/mainreadinghall.jpg",
+      src: "/mainreadinghall.webp",
     },
     {
       id: 2,
       title: "Filipiniana Archives",
       sub: "Historical documents & Misamis Oriental regional literature",
-      src: "/Filipiniana.jpg",
+      src: "/Filipiniana.webp",
     },
     {
       id: 3,
       title: "Children's Learning Corner",
       sub: "Interactive storybooks & early literacy section",
-      src: "/kidscorner.jpg",
+      src: "/kidscorner.webp",
     },
     {
       id: 4,
       title: "Digital Research Hub",
       sub: "High-speed internet workstations & e-catalog terminals",
-      src: "/digitalhub.jpg",
+      src: "/digitalhub.webp",
     },
     {
       id: 5,
       title: "Quiet Study Alcoves",
       sub: "Individual focus desks for academic research",
-      src: "/alcoves.jpg",
+      src: "/alcoves.webp",
     },
     {
       id: 6,
       title: "Periodicals & Journals Section",
       sub: "Daily local newspapers & academic publications",
-      src: "/periodicalsjournal.jpg",
+      src: "/periodicalsjournal.webp",
     },
   ];
 
@@ -213,7 +215,7 @@ export default function Landing() {
         <a href="#top" className="landing-brand">
           <div className="brand-logo-box">
             <img
-              src="/logo.png"
+              src="/logo.webp"
               alt="Misamis Oriental Provincial Capitol Public Library Logo"
               className="brand-logo-icon"
             />
@@ -390,7 +392,13 @@ export default function Landing() {
           ) : visibleBooks.length > 0 ? (
             <div className="catalog-showcase-track">
               {visibleBooks.map((book, index) => (
-                <div className="catalog-book-preview" key={`${book._id || book.title}-${index}`}>
+                <div
+                  className="catalog-book-preview"
+                  key={`${book._id || book.title}-${index}`}
+                  onClick={() => setSelectedCatalogBook(book)}
+                  style={{ cursor: "pointer" }}
+                  title={`Click to view details for "${book.title}"`}
+                >
                   <div className="catalog-book-cover">
                     {book.coverUrl ? (
                       <img src={book.coverUrl} alt="" />
@@ -459,7 +467,7 @@ export default function Landing() {
               title="Click to view picture preview"
             >
               <div className="picture-frame-img-box">
-                <img src={photo.src} alt={photo.title} className="picture-frame-img" />
+                <img src={photo.src} alt={photo.title} className="picture-frame-img" loading="lazy" decoding="async" />
               </div>
               <div className="picture-frame-caption-bar">
                 <div>
@@ -669,6 +677,234 @@ export default function Landing() {
           <span>Web-Based Library Management System </span>
         </div>
       </footer>
+
+      {/* BOOK DETAILS PREVIEW MODAL */}
+      {selectedCatalogBook && (() => {
+        const highResCoverUrl = selectedCatalogBook.coverUrl
+          ? selectedCatalogBook.coverUrl.replace(/-[MS]\.jpg$/, "-L.jpg")
+          : null;
+        const displayAuthor = selectedCatalogBook.author || "Unknown Author";
+
+        return createPortal(
+          <div
+            className="lightbox-modal-backdrop"
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(15, 23, 42, 0.75)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10000,
+              padding: "20px",
+              overflowY: "auto"
+            }}
+            onClick={() => setSelectedCatalogBook(null)}
+          >
+            <div
+              style={{
+                backgroundColor: "#FFFDF7",
+                border: "1px solid #DCC7AA",
+                borderRadius: "20px",
+                padding: "32px",
+                maxWidth: "920px",
+                width: "min(920px, 95vw)",
+                maxHeight: "92vh",
+                overflowY: "auto",
+                boxShadow: "0 28px 70px -15px rgba(43, 30, 26, 0.5)",
+                color: "#4B3832",
+                margin: "auto",
+                position: "relative"
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button top-right */}
+              <button
+                type="button"
+                onClick={() => setSelectedCatalogBook(null)}
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  background: "#FAF7F2",
+                  border: "1px solid #DCC7AA",
+                  borderRadius: "50%",
+                  width: "38px",
+                  height: "38px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  color: "#8C7768",
+                  transition: "all 0.18s ease",
+                  zIndex: 10
+                }}
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
+
+              {/* 2-Column Responsive Layout */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
+                gap: "32px",
+                alignItems: "start"
+              }}>
+                {/* LEFT: Huge Book Cover */}
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "14px",
+                  textAlign: "center"
+                }}>
+                  {selectedCatalogBook.coverUrl ? (
+                    <div style={{
+                      width: "100%",
+                      maxWidth: "320px",
+                      borderRadius: "16px",
+                      overflow: "hidden",
+                      border: "1px solid #DCC7AA",
+                      boxShadow: "0 20px 48px rgba(75, 56, 50, 0.28)",
+                      background: "#FAF7F2",
+                      aspectRatio: "3 / 4.3"
+                    }}>
+                      <img
+                        src={highResCoverUrl}
+                        alt={selectedCatalogBook.title}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block"
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{
+                      width: "100%",
+                      maxWidth: "320px",
+                      borderRadius: "16px",
+                      aspectRatio: "3 / 4.3",
+                      background: "linear-gradient(145deg, #FFFDF7, #F5E6CA 60%, #DCC7AA)",
+                      border: "1px solid #DCC7AA",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "28px",
+                      boxShadow: "0 20px 48px rgba(75, 56, 50, 0.2)",
+                      color: "#6F4E37"
+                    }}>
+                      <BookOpen size={72} strokeWidth={1.5} />
+                      <span style={{ marginTop: "16px", fontWeight: 700, fontSize: "18px", color: "#4B3832" }}>{selectedCatalogBook.title}</span>
+                      <span style={{ marginTop: "6px", fontSize: "14px", color: "#8C7768" }}>{displayAuthor}</span>
+                    </div>
+                  )}
+
+                  {selectedCatalogBook.coverUrl && (
+                    <a
+                      href={highResCoverUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: "13px",
+                        color: "#6F4E37",
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        textDecoration: "none",
+                        padding: "7px 14px",
+                        borderRadius: "8px",
+                        background: "rgba(245, 230, 202, 0.55)",
+                        border: "1px solid #DCC7AA",
+                        transition: "all 0.18s ease"
+                      }}
+                      title="Open full resolution cover image in new tab"
+                    >
+                      <Maximize2 size={14} /> View Original High-Res Cover
+                    </a>
+                  )}
+                </div>
+
+                {/* RIGHT: Header, Details and Actions */}
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                  <div style={{ paddingRight: "44px", marginBottom: "20px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 700, padding: "3px 10px", borderRadius: "12px", background: "#F5E6CA", color: "#6F4E37" }}>
+                        {selectedCatalogBook.category || "General"}
+                      </span>
+                      <span style={{ fontSize: "12px", fontWeight: 700, padding: "3px 10px", borderRadius: "12px", background: selectedCatalogBook.available !== false ? "#F0F7ED" : "#FDF2F0", color: selectedCatalogBook.available !== false ? "#1B5E20" : "#8E2116" }}>
+                        {selectedCatalogBook.available !== false ? "AVAILABLE" : "BORROWED"}
+                      </span>
+                    </div>
+                    <h2 style={{ margin: "0 0 6px 0", fontSize: "26px", fontWeight: 800, color: "#4B3832", lineHeight: 1.25 }}>
+                      {selectedCatalogBook.title}
+                    </h2>
+                    <p style={{ margin: 0, fontSize: "15px", color: "#8C7768", fontWeight: 500 }}>
+                      by <strong style={{ color: "#4B3832" }}>{displayAuthor}</strong>
+                    </p>
+                  </div>
+
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "14px",
+                    background: "#FAF7F2", padding: "20px", borderRadius: "14px", border: "1px solid #DCC7AA", marginBottom: "24px"
+                  }}>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#8C7768", fontWeight: 700 }}>Category</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4B3832" }}>{selectedCatalogBook.category || "General"}</span>
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#8C7768", fontWeight: 700 }}>Shelf Location</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4B3832" }}>{selectedCatalogBook.shelf || "General Shelf"}</span>
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#8C7768", fontWeight: 700 }}>Publisher</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4B3832" }}>{selectedCatalogBook.publisher || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#8C7768", fontWeight: 700 }}>Publication Year</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4B3832" }}>{selectedCatalogBook.publicationYear || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#8C7768", fontWeight: 700 }}>Barcode</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4B3832" }}>{selectedCatalogBook.barcode || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#8C7768", fontWeight: 700 }}>Status</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: 600, color: selectedCatalogBook.available !== false ? "#1B5E20" : "#8E2116" }}>
+                        {selectedCatalogBook.available !== false ? "Available to Borrow" : "Currently Borrowed"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "auto" }}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCatalogBook(null)}
+                      style={{ padding: "10px 20px", borderRadius: "10px", border: "1px solid #DCC7AA", background: "transparent", color: "#4B3832", cursor: "pointer", fontWeight: 600, fontSize: "14.5px" }}
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/login")}
+                      style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: "#4B3832", color: "#FFFDF7", cursor: "pointer", fontWeight: 600, fontSize: "14.5px" }}
+                    >
+                      Sign In to Borrow
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
     </div>
   );
 }

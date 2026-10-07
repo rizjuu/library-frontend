@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
   BookOpen,
@@ -6,18 +7,13 @@ import {
   PlusCircle,
   Barcode,
   Filter,
-  Calendar,
-  Building,
-  Hash,
-  Layers,
-  Tag,
-  User,
   X,
   RotateCcw,
-  CheckCircle,
-  BookmarkCheck,
+  Pencil,
+  ChevronRight,
+  ChevronLeft,
   Archive,
-  Pencil
+  Maximize2
 } from "lucide-react";
 import api from "../api";
 
@@ -121,6 +117,52 @@ function Catalog({
     return matchesSearch && matchesCategory && matchesShelf && matchesAvailability && matchesDecade;
   });
 
+  // Pagination Configuration & Handlers
+  const [currentPage, setCurrentPage] = useState(1);
+  const catalogTopRef = useRef(null);
+  const BOOKS_PER_PAGE = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter, shelfFilter, availabilityFilter, decadeFilter]);
+
+  const totalPages = Math.ceil(filteredBooks.length / BOOKS_PER_PAGE) || 1;
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safeCurrentPage - 1) * BOOKS_PER_PAGE;
+  const currentBooks = filteredBooks.slice(startIndex, startIndex + BOOKS_PER_PAGE);
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages || newPage === safeCurrentPage) return;
+    setCurrentPage(newPage);
+    if (catalogTopRef.current) {
+      catalogTopRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const getPageNumbers = () => {
+    if (totalPages <= 6) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages = [];
+    if (safeCurrentPage <= 4) {
+      pages.push(1, 2, 3, 4);
+      if (totalPages > 5) {
+        pages.push("...");
+        pages.push(totalPages);
+      } else {
+        pages.push(5);
+      }
+    } else if (safeCurrentPage >= totalPages - 3) {
+      pages.push(1, "...");
+      for (let i = totalPages - 3; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1, "...", safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, "...", totalPages);
+    }
+    return pages;
+  };
+
   const formatDate = (dateVal) => {
     if (!dateVal) return "N/A";
     return new Date(dateVal).toLocaleDateString("en-US", {
@@ -220,7 +262,7 @@ function Catalog({
       </div>
 
       {/* Comprehensive 4-Filter Catalog Toolbar */}
-      <div className="catalog-toolbar" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+      <div ref={catalogTopRef} className="catalog-toolbar" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
         {/* Search Input */}
         <div className="toolbar-search" style={{ flex: "1 1 240px", minWidth: "220px" }}>
           <Search size={20} className="toolbar-search-icon w-5 h-5" />
@@ -363,8 +405,9 @@ function Catalog({
           </button>
         </div>
       ) : (
-        <div className="book-grid">
-          {filteredBooks.map((book) => {
+        <>
+          <div className="book-grid">
+          {currentBooks.map((book) => {
             const displayAuthor = book.author || (Array.isArray(book.authors) ? book.authors.join(", ") : "Unknown Author");
             const isAvailable = book.available !== false && book.status !== "borrowed";
             const displayStatus = book.status ? book.status.toUpperCase() : (isAvailable ? "AVAILABLE" : "BORROWED");
@@ -459,237 +502,434 @@ function Catalog({
               </div>
             );
           })}
-        </div>
+          </div>
+
+          {/* Catalog Pagination matching website theme */}
+          {filteredBooks.length > 0 && (
+            <div className="catalog-pagination" role="navigation" aria-label="Catalog Books Pagination">
+              {safeCurrentPage > 1 && (
+                <button
+                  type="button"
+                  className="pagination-btn-nav"
+                  onClick={() => handlePageChange(safeCurrentPage - 1)}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} strokeWidth={2.5} />
+                  <span>Prev</span>
+                </button>
+              )}
+
+              <div className="pagination-pages-group">
+                {getPageNumbers().map((item, index) => {
+                  if (item === "...") {
+                    return (
+                      <span key={`ellipsis-${index}`} className="pagination-ellipsis">
+                        …
+                      </span>
+                    );
+                  }
+                  const isActive = item === safeCurrentPage;
+                  return (
+                    <button
+                      key={`page-${item}`}
+                      type="button"
+                      className={`pagination-btn-page ${isActive ? "active" : ""}`}
+                      onClick={() => handlePageChange(item)}
+                      aria-label={`Page ${item}`}
+                      aria-current={isActive ? "page" : undefined}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                className="pagination-btn-nav"
+                disabled={safeCurrentPage >= totalPages}
+                onClick={() => handlePageChange(safeCurrentPage + 1)}
+                aria-label="Next page"
+              >
+                <span>Next</span>
+                <ChevronRight size={16} strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* 10-FIELD DETAILED BOOK MODAL */}
-      {selectedBook && (
-        <div className="modal-backdrop" style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: "rgba(15, 23, 42, 0.75)", backdropFilter: "blur(6px)",
-          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "16px"
-        }}>
-          <div style={{
-            backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)",
-            borderRadius: "16px", padding: "28px", maxWidth: "560px", width: "100%",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-              <div style={{ display: "flex", gap: "14px", alignItems: "center", minWidth: 0 }}>
-                {selectedBook.coverUrl ? (
-                  <img
-                    src={selectedBook.coverUrl}
-                    alt={selectedBook.title}
-                    style={{ width: "54px", height: "72px", objectFit: "cover", borderRadius: "8px", border: "1px solid var(--border)" }}
-                  />
-                ) : (
-                  <div className="book-icon-box" style={{ width: "54px", height: "54px" }}>
-                    <BookOpen size={28} />
-                  </div>
-                )}
-                <div>
-                  <h3 style={{ margin: 0, fontSize: "20px", color: "var(--text-primary)" }}>{selectedBook.title}</h3>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "var(--text-muted)" }}>
-                    by {selectedBook.author || (Array.isArray(selectedBook.authors) ? selectedBook.authors.join(", ") : "Unknown Author")}
-                  </p>
-                </div>
-              </div>
+      {selectedBook && (() => {
+        const highResCoverUrl = selectedBook.coverUrl
+          ? selectedBook.coverUrl.replace(/-[MS]\.jpg$/, "-L.jpg")
+          : null;
+        const displayAuthor = selectedBook.author || (Array.isArray(selectedBook.authors) ? selectedBook.authors.join(", ") : "Unknown Author");
+
+        return createPortal(
+          <div
+            className="modal-backdrop"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(15, 23, 42, 0.75)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10000,
+              padding: "20px",
+              overflowY: "auto"
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedBook(null);
+                setIsEditing(false);
+              }
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "var(--bg-surface)",
+                border: "1px solid var(--border)",
+                borderRadius: "20px",
+                padding: "32px",
+                maxWidth: "940px",
+                width: "min(940px, 95vw)",
+                maxHeight: "92vh",
+                overflowY: "auto",
+                boxShadow: "0 28px 70px -15px rgba(43, 30, 26, 0.5)",
+                margin: "auto",
+                position: "relative"
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button top-right */}
               <button
                 type="button"
                 onClick={() => {
                   setSelectedBook(null);
                   setIsEditing(false);
                 }}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  background: "var(--bg-base)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "50%",
+                  width: "38px",
+                  height: "38px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  transition: "all 0.18s ease",
+                  zIndex: 10
+                }}
+                aria-label="Close modal"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
-            </div>
 
-            {isEditing ? (
+              {/* 2-Column Responsive Layout: Huge Picture Left, Details & Form Right */}
               <div style={{
-                display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
-                background: "var(--bg-base)", padding: "16px", borderRadius: "12px", border: "1px solid var(--border)", marginBottom: "20px"
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
+                gap: "32px",
+                alignItems: "start"
               }}>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>TITLE *</label>
-                  <input
-                    type="text"
-                    value={editForm.title}
-                    onChange={(e) => handleEditChange("title", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
-                  />
+                {/* LEFT: Huge Book Cover Showcase */}
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "14px",
+                  textAlign: "center"
+                }}>
+                  {selectedBook.coverUrl ? (
+                    <div style={{
+                      width: "100%",
+                      maxWidth: "340px",
+                      borderRadius: "16px",
+                      overflow: "hidden",
+                      border: "1px solid var(--border)",
+                      boxShadow: "0 20px 48px rgba(75, 56, 50, 0.28)",
+                      background: "var(--bg-base)",
+                      aspectRatio: "3 / 4.3"
+                    }}>
+                      <img
+                        src={highResCoverUrl}
+                        alt={selectedBook.title}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block"
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{
+                      width: "100%",
+                      maxWidth: "340px",
+                      borderRadius: "16px",
+                      aspectRatio: "3 / 4.3",
+                      background: "linear-gradient(145deg, #FFFDF7, #F5E6CA 60%, #DCC7AA)",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "28px",
+                      boxShadow: "0 20px 48px rgba(75, 56, 50, 0.2)",
+                      color: "#6F4E37"
+                    }}>
+                      <BookOpen size={72} strokeWidth={1.5} />
+                      <span style={{ marginTop: "16px", fontWeight: 700, fontSize: "18px", color: "var(--text-primary)" }}>{selectedBook.title}</span>
+                      <span style={{ marginTop: "6px", fontSize: "14px", color: "var(--text-muted)" }}>{displayAuthor}</span>
+                    </div>
+                  )}
+
+                  {selectedBook.coverUrl && (
+                    <a
+                      href={highResCoverUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: "13px",
+                        color: "var(--color-primary)",
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        textDecoration: "none",
+                        padding: "7px 14px",
+                        borderRadius: "8px",
+                        background: "rgba(245, 230, 202, 0.55)",
+                        border: "1px solid var(--border)",
+                        transition: "all 0.18s ease"
+                      }}
+                      title="Open full resolution cover image in new tab"
+                    >
+                      <Maximize2 size={14} /> View Original High-Res Cover
+                    </a>
+                  )}
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>ISBN</label>
-                  <input
-                    type="text"
-                    value={editForm.isbn}
-                    onChange={(e) => handleEditChange("isbn", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
-                  />
+
+                {/* RIGHT: Header, Details Grid or Edit Form */}
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                  <div style={{ paddingRight: "44px", marginBottom: "22px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+                      <span className="status-pill active" style={{ fontSize: "11.5px", padding: "3px 10px" }}>
+                        {selectedBook.category || "General"}
+                      </span>
+                      <span className={`status-pill ${selectedBook.available !== false && selectedBook.status !== "borrowed" ? "active" : "overdue"}`} style={{ fontSize: "11.5px", padding: "3px 10px" }}>
+                        <span className="status-pill-dot" />
+                        {(selectedBook.status || (selectedBook.available ? "available" : "borrowed")).toUpperCase()}
+                      </span>
+                    </div>
+                    <h2 style={{ margin: "0 0 6px 0", fontSize: "26px", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.25 }}>
+                      {selectedBook.title}
+                    </h2>
+                    <p style={{ margin: 0, fontSize: "15px", color: "var(--text-muted)", fontWeight: 500 }}>
+                      by <strong style={{ color: "var(--text-primary)" }}>{displayAuthor}</strong>
+                    </p>
+                  </div>
+
+                  {isEditing ? (
+                    <div style={{
+                      display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
+                      background: "var(--bg-base)", padding: "16px", borderRadius: "12px", border: "1px solid var(--border)", marginBottom: "20px"
+                    }}>
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>TITLE *</label>
+                        <input
+                          type="text"
+                          value={editForm.title}
+                          onChange={(e) => handleEditChange("title", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>ISBN</label>
+                        <input
+                          type="text"
+                          value={editForm.isbn}
+                          onChange={(e) => handleEditChange("isbn", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>AUTHOR</label>
+                        <input
+                          type="text"
+                          value={editForm.author}
+                          onChange={(e) => handleEditChange("author", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>CATEGORY</label>
+                        <input
+                          type="text"
+                          value={editForm.category}
+                          onChange={(e) => handleEditChange("category", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>PUBLISHER</label>
+                        <input
+                          type="text"
+                          value={editForm.publisher}
+                          onChange={(e) => handleEditChange("publisher", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>PUBLICATION YEAR</label>
+                        <input
+                          type="number"
+                          value={editForm.publicationYear}
+                          onChange={(e) => handleEditChange("publicationYear", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>SHELF LOCATION</label>
+                        <input
+                          type="text"
+                          value={editForm.shelf}
+                          onChange={(e) => handleEditChange("shelf", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>STATUS</label>
+                        <select
+                          value={editForm.status}
+                          onChange={(e) => handleEditChange("status", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        >
+                          <option value="available">Available</option>
+                          <option value="borrowed">Borrowed</option>
+                          <option value="maintenance">Maintenance</option>
+                          <option value="reserved">Reserved</option>
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "14px",
+                      background: "var(--bg-base)", padding: "20px", borderRadius: "14px", border: "1px solid var(--border)", marginBottom: "22px"
+                    }}>
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>1. ISBN</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.isbn || "N/A"}</span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>2. BARCODE</span>
+                        <span className="barcode-chip" style={{ display: "inline-flex", marginTop: "2px" }}>{selectedBook.barcode || "N/A"}</span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>3. TITLE</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.title}</span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>4. AUTHOR</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>
+                          {displayAuthor}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>5. CATEGORY</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.category || "General"}</span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>6. PUBLISHER</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.publisher || "N/A"}</span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>7. PUBLICATION YEAR</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>
+                          {selectedBook.publicationYear ? `${selectedBook.publicationYear} (${getDecade(selectedBook.publicationYear)})` : "N/A"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>8. SHELF LOCATION</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.shelf || "N/A"}</span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>9. CATALOG STATUS</span>
+                        <span className={`status-pill ${selectedBook.available !== false && selectedBook.status !== "borrowed" ? "active" : "overdue"}`} style={{ display: "inline-flex", marginTop: "4px" }}>
+                          <span className="status-pill-dot" />
+                          {(selectedBook.status || (selectedBook.available ? "available" : "borrowed")).toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>10. DATE ADDED</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>
+                          📅 {formatDate(selectedBook.dateAdded || selectedBook.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginTop: "auto" }}>
+                    {canArchive && !isEditing && (
+                      <button type="button" className="btn btn-secondary" onClick={handleArchive}>
+                        <Archive size={17} />
+                        Weed Book
+                      </button>
+                    )}
+                    {canEdit && !isEditing && (
+                      <button type="button" className="btn btn-primary" onClick={startEditing}>
+                        <Pencil size={17} />
+                        Edit Book
+                      </button>
+                    )}
+                    {isEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={handleEditSave}
+                          disabled={savingEdit}
+                        >
+                          {savingEdit ? "Saving..." : "Save Changes"}
+                        </button>
+                        <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button type="button" className="btn btn-secondary" onClick={() => setSelectedBook(null)} style={{ marginLeft: "auto" }}>
+                        Close Details
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>AUTHOR</label>
-                  <input
-                    type="text"
-                    value={editForm.author}
-                    onChange={(e) => handleEditChange("author", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>CATEGORY</label>
-                  <input
-                    type="text"
-                    value={editForm.category}
-                    onChange={(e) => handleEditChange("category", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>PUBLISHER</label>
-                  <input
-                    type="text"
-                    value={editForm.publisher}
-                    onChange={(e) => handleEditChange("publisher", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>PUBLICATION YEAR</label>
-                  <input
-                    type="number"
-                    value={editForm.publicationYear}
-                    onChange={(e) => handleEditChange("publicationYear", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>SHELF LOCATION</label>
-                  <input
-                    type="text"
-                    value={editForm.shelf}
-                    onChange={(e) => handleEditChange("shelf", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>STATUS</label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => handleEditChange("status", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
-                  >
-                    <option value="available">Available</option>
-                    <option value="borrowed">Borrowed</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="reserved">Reserved</option>
-                  </select>
-                </div>
-              </div>
-            ) : (
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
-              background: "var(--bg-base)", padding: "16px", borderRadius: "12px", border: "1px solid var(--border)", marginBottom: "20px"
-            }}>
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>1. ISBN</span>
-                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.isbn || "N/A"}</span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>2. BARCODE</span>
-                <span className="barcode-chip" style={{ display: "inline-flex", marginTop: "2px" }}>{selectedBook.barcode || "N/A"}</span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>3. TITLE</span>
-                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.title}</span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>4. AUTHOR</span>
-                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>
-                  {selectedBook.author || (Array.isArray(selectedBook.authors) ? selectedBook.authors.join(", ") : "Unknown")}
-                </span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>5. CATEGORY</span>
-                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.category || "General"}</span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>6. PUBLISHER</span>
-                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.publisher || "N/A"}</span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>7. PUBLICATION YEAR</span>
-                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>
-                  {selectedBook.publicationYear ? `${selectedBook.publicationYear} (${getDecade(selectedBook.publicationYear)})` : "N/A"}
-                </span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>8. SHELF LOCATION</span>
-                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.shelf || "N/A"}</span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>9. CATALOG STATUS</span>
-                <span className={`status-pill ${selectedBook.available !== false && selectedBook.status !== "borrowed" ? "active" : "overdue"}`} style={{ display: "inline-flex", marginTop: "4px" }}>
-                  <span className="status-pill-dot" />
-                  {(selectedBook.status || (selectedBook.available ? "available" : "borrowed")).toUpperCase()}
-                </span>
-              </div>
-
-              <div>
-                <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>10. DATE ADDED</span>
-                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>
-                  📅 {formatDate(selectedBook.dateAdded || selectedBook.createdAt)}
-                </span>
               </div>
             </div>
-            )}
-
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-              {canArchive && !isEditing && (
-                <button type="button" className="btn btn-secondary" onClick={handleArchive}>
-                  <Archive size={17} />
-                  Weed Book
-                </button>
-              )}
-              {canEdit && !isEditing && (
-                <button type="button" className="btn btn-primary" onClick={startEditing}>
-                  <Pencil size={17} />
-                  Edit Book
-                </button>
-              )}
-              {isEditing ? (
-                <>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleEditSave}
-                    disabled={savingEdit}
-                  >
-                    {savingEdit ? "Saving..." : "Save Changes"}
-                  </button>
-                  <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button type="button" className="btn btn-secondary" onClick={() => setSelectedBook(null)}>
-                  Close Details
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        );
+      })()}
     </motion.div>
   );
 }

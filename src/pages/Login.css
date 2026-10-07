@@ -74,7 +74,7 @@
 
   background:
     linear-gradient(rgba(75, 56, 50, 0.45), rgba(43, 30, 26, 0.88)),
-    url("/library.jpg");
+    url("/library.webp");
 
   background-size: cover;
   background-position: center;
