@@ -120,6 +120,7 @@ function AdminDashboard() {
         onToggleTheme={toggleTheme}
         onToggleMobileMenu={() => setMobileSidebarOpen(true)}
         activeTab={activeTab}
+        showToast={showToast}
       />
 
       {/* Main Content Area */}
@@ -133,9 +134,7 @@ function AdminDashboard() {
             totalUsers={dashboardStats.totalUsers}
             totalPatrons={dashboardStats.totalPatrons}
             recentTransactions={dashboardStats.recentTransactions}
-            announcements={dashboardStats.announcements}
-            loadingAnnouncements={loadingStats}
-            canManageAnnouncements={true}
+            books={books}
             loading={loadingStats}
             onNavigate={(tab) => setActiveTab(tab)}
             onRefreshData={handleRefreshAll}

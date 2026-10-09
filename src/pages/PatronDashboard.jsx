@@ -7,13 +7,14 @@ import api from "../api";
 import Catalog from "./Catalog";
 import Profile from "./Profile";
 import {
+  LayoutGrid,
   BookOpen,
   BookmarkCheck,
+  BookCheck,
   Clock,
   CheckSquare,
   Search,
   History,
-  Megaphone,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -24,8 +25,6 @@ function PatronDashboard() {
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [toasts, setToasts] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
-  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [myLoans, setMyLoans] = useState([]);
@@ -54,18 +53,6 @@ function PatronDashboard() {
       console.error("Failed to load books", err);
     } finally {
       setLoadingBooks(false);
-    }
-  };
-
-  const fetchAnnouncements = async () => {
-    setLoadingAnnouncements(true);
-    try {
-      const res = await api.get("/announcements");
-      setAnnouncements(res.data || []);
-    } catch (err) {
-      console.error("Failed to load announcements", err);
-    } finally {
-      setLoadingAnnouncements(false);
     }
   };
 
@@ -105,7 +92,6 @@ function PatronDashboard() {
 
   useEffect(() => {
     fetchBooks();
-    fetchAnnouncements();
     fetchMyLoans();
     fetchMyHistory();
     fetchMyStats();
@@ -143,6 +129,18 @@ function PatronDashboard() {
         : `In ${nextDueDays} day${nextDueDays === 1 ? "" : "s"}`;
 
   const displayName = user?.name || "Library Patron";
+  const borrowedBookCount = books.filter((book) => book.status === "borrowed" || book.available === false).length;
+  const reservedBookCount = books.filter((book) => book.status === "reserved").length;
+  const availableBookCount = books.filter((book) =>
+    book.status === "available" ||
+    (book.available !== false && book.status !== "reserved" && book.status !== "borrowed")
+  ).length;
+  const bookAvailabilityData = [
+    { label: "Available", value: availableBookCount, color: "#16a34a" },
+    { label: "Borrowed", value: borrowedBookCount, color: "#dc2626" },
+    { label: "Reserved", value: reservedBookCount, color: "#ea580c" },
+  ];
+  const bookAvailabilityTotal = availableBookCount + borrowedBookCount + reservedBookCount;
 
   const categories = Array.from(
     new Set(books.map((b) => b.category).filter(Boolean))
@@ -192,6 +190,7 @@ function PatronDashboard() {
         onToggleTheme={toggleTheme}
         onToggleMobileMenu={() => setMobileSidebarOpen(true)}
         activeTab={activeTab}
+        showToast={showToast}
       />
 
       {/* Main Content Area */}
@@ -203,17 +202,17 @@ function PatronDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="page-title-row">
-              <div className="page-title-group">
-                <span className="page-date-kicker">
-                  {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-                </span>
-                <h1 className="page-title">
-                  Welcome back, {displayName} <span role="img" aria-label="waving hand">👋</span>
-                </h1>
-                <p className="page-subtitle">Track your active loans, due dates, and discover new books.</p>
+            <div className="dashboard-welcome-banner">
+              <div className="dashboard-welcome-left">
+                <div className="dashboard-welcome-icon-box">
+                  <LayoutGrid size={22} />
+                </div>
+                <div>
+                  <h1 className="dashboard-welcome-title">Hello, {displayName}!</h1>
+                  <p className="dashboard-welcome-subtitle">Your library overview</p>
+                </div>
               </div>
-              <div className="page-title-actions">
+              <div className="dashboard-welcome-right">
                 <button
                   type="button"
                   className="btn btn-primary"
@@ -225,62 +224,97 @@ function PatronDashboard() {
               </div>
             </div>
 
-            {/* Patron Stats Grid */}
-            <div className="stats-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-              <div className="stat-card primary">
-                <div className="stat-card-top">
-                  <span className="stat-label">MY ACTIVE LOANS</span>
-                  <div className="stat-icon-box primary">
-                    <BookmarkCheck size={24} />
+            <div className="overview-stats-grid">
+              <div className="overview-stat-card">
+                <div className="overview-card-left">
+                  <div className="overview-card-icon-box blue"><BookmarkCheck size={22} /></div>
+                  <div className="overview-card-info">
+                    <span className="overview-card-label">My active loans</span>
+                    <span className="overview-card-value">{myStats.activeLoans}</span>
+                    <span className="overview-card-sub">Books checked out</span>
                   </div>
                 </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">{myStats.activeLoans}</div>
-                  <div className="stat-change up"><span>Books checked out</span></div>
-                </div>
+                <div className="overview-card-indicator blue" />
               </div>
 
-              <div className="stat-card success">
-                <div className="stat-card-top">
-                  <span className="stat-label">BOOKS RETURNED</span>
-                  <div className="stat-icon-box success">
-                    <CheckSquare size={24} />
+              <div className="overview-stat-card">
+                <div className="overview-card-left">
+                  <div className="overview-card-icon-box green"><CheckSquare size={22} /></div>
+                  <div className="overview-card-info">
+                    <span className="overview-card-label">Books returned</span>
+                    <span className="overview-card-value">{myStats.returnedCount}</span>
+                    <span className="overview-card-sub">All-time total</span>
                   </div>
                 </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">{myStats.returnedCount}</div>
-                  <div className="stat-change up"><span>All-time total</span></div>
-                </div>
+                <div className="overview-card-indicator green" />
               </div>
 
-              <div className="stat-card info">
-                <div className="stat-card-top">
-                  <span className="stat-label">NEXT DUE DATE</span>
-                  <div className="stat-icon-box info">
-                    <Clock size={24} />
+              <div className="overview-stat-card">
+                <div className="overview-card-left">
+                  <div className="overview-card-icon-box amber"><Clock size={22} /></div>
+                  <div className="overview-card-info">
+                    <span className="overview-card-label">Next due date</span>
+                    <span className="overview-card-value" style={{ fontSize: "20px" }}>{nextDueLabel}</span>
+                    <span className="overview-card-sub">{nextDueSub}</span>
                   </div>
                 </div>
-                <div className="stat-card-body">
-                  <div className="stat-number" style={{ fontSize: "1.5rem" }}>{nextDueLabel}</div>
-                  <div className="stat-change neutral"><span>{nextDueSub}</span></div>
-                </div>
+                <div className="overview-card-indicator amber" />
               </div>
 
-              <div className="stat-card primary">
-                <div className="stat-card-top">
-                  <span className="stat-label">CATALOG AVAILABLE</span>
-                  <div className="stat-icon-box primary">
-                    <BookOpen size={24} />
+              <div className="overview-stat-card">
+                <div className="overview-card-left">
+                  <div className="overview-card-icon-box teal"><BookOpen size={22} /></div>
+                  <div className="overview-card-info">
+                    <span className="overview-card-label">Catalog available</span>
+                    <span className="overview-card-value">{availableBookCount}</span>
+                    <span className="overview-card-sub">{loadingBooks ? "Loading catalog..." : "Ready to borrow"}</span>
                   </div>
                 </div>
-                <div className="stat-card-body">
-                  <div className="stat-number">{books.length}</div>
-                  <div className="stat-change up"><span>Ready to borrow</span></div>
-                </div>
+                <div className="overview-card-indicator teal" />
               </div>
             </div>
 
-            <div className="dashboard-grid-layout">
+            <div className="overview-charts-grid patron-availability-grid">
+              <section className="overview-chart-card">
+                <div className="overview-chart-header">
+                  <div className="overview-chart-icon-box green"><BookCheck size={16} /></div>
+                  <h3 className="overview-chart-title">Book Availability Status</h3>
+                </div>
+                <div className="overview-chart-body">
+                  <div className="patron-availability-bars">
+                  {bookAvailabilityData.map((item) => (
+                    <div key={item.label} className="patron-availability-row">
+                      <div className="patron-availability-meta">
+                        <span className="patron-availability-label">
+                          <span className="overview-legend-dot" style={{ backgroundColor: item.color }} />
+                          {item.label}
+                        </span>
+                        <span className="patron-availability-count">{item.value}</span>
+                      </div>
+                      <div
+                        className="patron-availability-track"
+                        role="meter"
+                        aria-label={`${item.label} books`}
+                        aria-valuemin={0}
+                        aria-valuemax={Math.max(bookAvailabilityTotal, 1)}
+                        aria-valuenow={item.value}
+                      >
+                        <div
+                          className="patron-availability-fill"
+                          style={{
+                            width: `${bookAvailabilityTotal ? (item.value / bookAvailabilityTotal) * 100 : 0}%`,
+                            backgroundColor: item.color,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div className="dashboard-grid-layout patron-loans-layout">
               {/* Left Column: Active Loans */}
               <div className="recent-transactions-card">
                 <div className="card-header-row">
@@ -349,31 +383,6 @@ function PatronDashboard() {
                 </div>
               </div>
 
-              {/* Right Column: Library Announcements */}
-              <div className="announcements-card">
-                <div className="card-header-row" style={{ marginBottom: "12px" }}>
-                  <h3 className="card-header-title">
-                    <Megaphone size={20} style={{ color: "var(--color-primary)" }} />
-                    Library Notices
-                  </h3>
-                </div>
-
-                {announcements.length === 0 ? (
-                  <p style={{ color: "var(--text-muted)", fontSize: "13px", textAlign: "center", padding: "16px" }}>
-                    {loadingAnnouncements ? "Loading announcements..." : "No active announcements."}
-                  </p>
-                ) : (
-                  announcements.map((item) => (
-                    <div key={item._id || item.id} className="announcement-item">
-                      <div className="announcement-title">{item.title}</div>
-                      <p className="announcement-desc">{item.content}</p>
-                      <span className="announcement-date">
-                        {item.date || (item.createdAt ? new Date(item.createdAt).toISOString().split("T")[0] : "Recent")}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
             </div>
           </motion.div>
         )}

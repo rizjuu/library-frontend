@@ -8,29 +8,34 @@ import {
   Repeat,
   AlertCircle,
   Library,
-  FileText
+  FileText,
+  BookCheck
 } from "lucide-react";
 import api from "../api";
+import DonutChart from "../components/DonutChart";
 
 function Reports({ showToast = () => {} }) {
   const [activeReport, setActiveReport] = useState("circulation");
   const [circulation, setCirculation] = useState(null);
   const [overdue, setOverdue] = useState([]);
   const [inventory, setInventory] = useState(null);
+  const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sendingReminders, setSendingReminders] = useState(false);
 
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const [circRes, overdueRes, invRes] = await Promise.all([
+      const [circRes, overdueRes, invRes, booksRes] = await Promise.all([
         api.get("/reports/circulation"),
         api.get("/reports/overdue"),
-        api.get("/reports/inventory")
+        api.get("/reports/inventory"),
+        api.get("/books").catch(() => ({ data: [] }))
       ]);
       setCirculation(circRes.data);
       setOverdue(overdueRes.data || []);
       setInventory(invRes.data);
+      setBooks(booksRes.data || []);
     } catch (err) {
       console.error("Failed to load reports:", err);
       showToast(err.response?.data?.message || "Failed to load reports.", "error");
@@ -134,6 +139,30 @@ function Reports({ showToast = () => {} }) {
     { id: "inventory", label: "Inventory Report", icon: Library }
   ];
 
+  // Calculate book availability status (Available green, Borrowed red/pula, Reserved orange)
+  let availableCount = 0;
+  let borrowedCount = 0;
+  let reservedCount = 0;
+  let totalTitlesCount = 0;
+
+  if (books && books.length > 0) {
+    totalTitlesCount = books.length;
+    borrowedCount = books.filter((b) => b.status === "borrowed" || b.available === false).length;
+    reservedCount = books.filter((b) => b.status === "reserved").length;
+    availableCount = books.filter((b) => b.status === "available" || (b.available !== false && b.status !== "reserved" && b.status !== "borrowed")).length;
+  } else if (inventory) {
+    totalTitlesCount = inventory.totalTitles || 0;
+    availableCount = inventory.categories.reduce((acc, c) => acc + (c.available || 0), 0);
+    borrowedCount = inventory.categories.reduce((acc, c) => acc + (c.borrowed || 0), 0);
+    reservedCount = Math.max(0, totalTitlesCount - availableCount - borrowedCount);
+  }
+
+  const availabilityData = [
+    { label: "Available", value: availableCount, color: "#16a34a" }, // Green
+    { label: "Borrowed", value: borrowedCount, color: "#dc2626" }, // Red (Pula)
+    { label: "Reserved", value: reservedCount, color: "#ea580c" }, // Orange
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -157,6 +186,65 @@ function Reports({ showToast = () => {} }) {
             <Download size={17} />
             Export CSV
           </button>
+        </div>
+      </div>
+
+      {/* Reports Circle Graph Section (Available: Green, Borrowed: Red/Pula, Reserved: Orange) */}
+      <div className="reports-analytics-overview-row" style={{ marginBottom: "22px" }}>
+        <div className="overview-chart-card" style={{ maxWidth: "560px" }}>
+          <div className="overview-chart-header">
+            <div className="overview-chart-icon-box green">
+              <BookCheck size={16} />
+            </div>
+            <h3 className="overview-chart-title">Book Availability Status</h3>
+          </div>
+
+          <div className="overview-chart-body">
+            <div className="overview-donut-column">
+              <DonutChart
+                size={148}
+                strokeWidth={18}
+                data={availabilityData}
+                total={totalTitlesCount}
+              />
+            </div>
+
+            <div className="overview-legend-column">
+              {availabilityData.map((item) => (
+                <div key={item.label} className="overview-legend-row">
+                  <div className="overview-legend-left">
+                    <span
+                      className="overview-legend-dot"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="overview-legend-label">{item.label}</span>
+                  </div>
+                  <span className="overview-legend-count">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="membership-footer-metrics">
+            <div className="membership-footer-col">
+              <span className="membership-footer-value" style={{ color: "#16a34a" }}>
+                {availableCount}
+              </span>
+              <span className="membership-footer-label">Available</span>
+            </div>
+            <div className="membership-footer-col">
+              <span className="membership-footer-value" style={{ color: "#dc2626" }}>
+                {borrowedCount}
+              </span>
+              <span className="membership-footer-label">Borrowed</span>
+            </div>
+            <div className="membership-footer-col">
+              <span className="membership-footer-value" style={{ color: "#ea580c" }}>
+                {reservedCount}
+              </span>
+              <span className="membership-footer-label">Reserved</span>
+            </div>
+          </div>
         </div>
       </div>
 

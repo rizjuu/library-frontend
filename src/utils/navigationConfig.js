@@ -140,7 +140,7 @@ export function getPageHeaderInfo(activeTab = "dashboard", role = "admin", user 
     case "users":
       return { title: "User Management", emoji: "👥", subtitle: "Admin-only management: Add, search, edit, enable/disable patrons, and inspect history.", category: "Circulation & Users" };
     case "patrons":
-      return { title: "Patron Directory", emoji: "👥", subtitle: "Lookup registered library members and active borrowing records.", category: "Circulation & Users" };
+      return { title: "Patron Directory", emoji: "👥", subtitle: "Lookup registered patrons and active borrowing records.", category: "Circulation & Users" };
     case "reports":
       return { title: "Reports & Analytics", emoji: "📈", subtitle: "System analytics, borrowing trends, overdue tracking, and inventory reports.", category: "Reports & Records" };
     case "weeding":

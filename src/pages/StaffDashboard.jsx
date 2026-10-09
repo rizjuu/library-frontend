@@ -21,10 +21,22 @@ function StaffDashboard() {
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [toasts, setToasts] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
-  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   const [patrons, setPatrons] = useState([]);
   const [loadingPatrons, setLoadingPatrons] = useState(true);
+
+  // Live Dashboard Stats State from MongoDB
+  const [dashboardStats, setDashboardStats] = useState({
+    totalBooks: 0,
+    availableBooks: 0,
+    borrowedBooks: 0,
+    overdueBooks: 0,
+    totalUsers: 0,
+    totalPatrons: 0,
+    totalStaff: 0,
+    recentTransactions: [],
+    announcements: []
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
 
   // Toast Helper
   const showToast = (message, type = "info") => {
@@ -33,6 +45,28 @@ function StaffDashboard() {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
+  };
+
+  const fetchDashboardStats = async () => {
+    setLoadingStats(true);
+    try {
+      const res = await api.get("/dashboard/stats");
+      setDashboardStats({
+        totalBooks: res.data.totalBooks || 0,
+        availableBooks: res.data.availableBooks || 0,
+        borrowedBooks: res.data.borrowedBooks || 0,
+        overdueBooks: res.data.overdueBooks || 0,
+        totalUsers: res.data.totalUsers || 0,
+        totalPatrons: res.data.totalPatrons || 0,
+        totalStaff: res.data.totalStaff || 0,
+        recentTransactions: res.data.recentTransactions || [],
+        announcements: res.data.announcements || []
+      });
+    } catch (err) {
+      console.error("Failed to load staff dashboard stats:", err);
+    } finally {
+      setLoadingStats(false);
+    }
   };
 
   const fetchBooks = async () => {
@@ -44,18 +78,6 @@ function StaffDashboard() {
       console.error("Failed to load books", err);
     } finally {
       setLoadingBooks(false);
-    }
-  };
-
-  const fetchAnnouncements = async () => {
-    setLoadingAnnouncements(true);
-    try {
-      const res = await api.get("/announcements");
-      setAnnouncements(res.data || []);
-    } catch (err) {
-      console.error("Failed to load announcements", err);
-    } finally {
-      setLoadingAnnouncements(false);
     }
   };
 
@@ -72,14 +94,20 @@ function StaffDashboard() {
   };
 
   useEffect(() => {
+    fetchDashboardStats();
     fetchBooks();
-    fetchAnnouncements();
     fetchPatrons();
   }, []);
 
-  const totalBooks = books.length;
-  const availableBooks = books.filter((b) => b.available !== false).length;
-  const borrowedBooks = books.filter((b) => b.available === false).length;
+  const handleRefreshAll = () => {
+    fetchDashboardStats();
+    fetchBooks();
+    fetchPatrons();
+  };
+
+  const totalBooks = dashboardStats.totalBooks || books.length;
+  const availableBooks = dashboardStats.availableBooks || books.filter((b) => b.available !== false).length;
+  const borrowedBooks = dashboardStats.borrowedBooks || books.filter((b) => b.available === false).length;
 
   return (
     <div className="app-shell">
@@ -111,6 +139,7 @@ function StaffDashboard() {
         onToggleTheme={toggleTheme}
         onToggleMobileMenu={() => setMobileSidebarOpen(true)}
         activeTab={activeTab}
+        showToast={showToast}
       />
 
       {/* Main Content Area */}
@@ -120,10 +149,15 @@ function StaffDashboard() {
             totalBooks={totalBooks}
             availableBooks={availableBooks}
             borrowedBooks={borrowedBooks}
+            overdueBooks={dashboardStats.overdueBooks}
+            totalUsers={dashboardStats.totalUsers}
+            totalPatrons={dashboardStats.totalPatrons}
+            recentTransactions={dashboardStats.recentTransactions}
             books={books}
-            announcements={announcements}
-            loadingAnnouncements={loadingAnnouncements}
+            loading={loadingStats}
             onNavigate={(tab) => setActiveTab(tab)}
+            onRefreshData={handleRefreshAll}
+            showToast={showToast}
           />
         )}
 
@@ -177,7 +211,7 @@ function StaffDashboard() {
                   <Users size={28} style={{ color: "var(--color-primary)" }} />
                   Patron Directory
                 </h1>
-                <p className="page-subtitle">Lookup registered library members and active borrowing records.</p>
+                <p className="page-subtitle">Lookup registered patrons and active borrowing records.</p>
               </div>
             </div>
 
