@@ -19,6 +19,7 @@ function Reports({ showToast = () => {} }) {
   const [circulation, setCirculation] = useState(null);
   const [overdue, setOverdue] = useState([]);
   const [inventory, setInventory] = useState(null);
+  const [inventoryTab, setInventoryTab] = useState("sections");
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sendingReminders, setSendingReminders] = useState(false);
@@ -95,9 +96,14 @@ function Reports({ showToast = () => {} }) {
       });
     } else if (activeReport === "inventory" && inventory) {
       filename = "inventory-report.csv";
-      rows.push(["Category", "Total Copies", "Available", "Borrowed"]);
-      inventory.categories.forEach((c) => {
-        rows.push([c.category, c.total, c.available, c.borrowed]);
+      rows.push(["Grouping", "Section / Category", "Total Copies", "Available", "Borrowed", "Utilization %"]);
+      (inventory.sections || []).forEach((s) => {
+        const pct = s.total > 0 ? Math.round((s.borrowed / s.total) * 100) : 0;
+        rows.push(["Library Section", s.section, s.total, s.available, s.borrowed, `${pct}%`]);
+      });
+      (inventory.categories || []).forEach((c) => {
+        const pct = c.total > 0 ? Math.round((c.borrowed / c.total) * 100) : 0;
+        rows.push(["Category", c.category, c.total, c.available, c.borrowed, `${pct}%`]);
       });
     }
 
@@ -408,13 +414,21 @@ function Reports({ showToast = () => {} }) {
         </div>
       ) : activeReport === "inventory" && inventory ? (
         <>
-          <div className="stats-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)", marginBottom: "18px" }}>
+          <div className="stats-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: "18px" }}>
             <div className="stat-card primary">
               <div className="stat-card-top">
                 <span className="stat-label">TOTAL TITLES IN CATALOG</span>
               </div>
               <div className="stat-card-body">
                 <div className="stat-number">{inventory.totalTitles}</div>
+              </div>
+            </div>
+            <div className="stat-card success">
+              <div className="stat-card-top">
+                <span className="stat-label">LIBRARY SECTIONS</span>
+              </div>
+              <div className="stat-card-body">
+                <div className="stat-number">{(inventory.sections || []).length || 6}</div>
               </div>
             </div>
             <div className="stat-card info">
@@ -428,43 +442,131 @@ function Reports({ showToast = () => {} }) {
           </div>
 
           <div className="recent-transactions-card">
+            <div className="card-header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid var(--border-subtle, rgba(0,0,0,0.08))" }}>
+              <div>
+                <h3 className="card-header-title" style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>
+                  {inventoryTab === "sections" ? "Library Sections Breakdown" : "Subject Categories Breakdown"}
+                </h3>
+                <p className="card-header-sub" style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
+                  {inventoryTab === "sections"
+                    ? "Official collection distribution across the 6 library sections."
+                    : "Inventory distributed by thematic subject categorization."}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: "6px", background: "var(--bg-base, #f1f5f9)", padding: "4px", borderRadius: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setInventoryTab("sections")}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "6px",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    background: inventoryTab === "sections" ? "var(--color-primary, #2563eb)" : "transparent",
+                    color: inventoryTab === "sections" ? "#ffffff" : "var(--text-muted, #64748b)",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  By Library Section
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInventoryTab("categories")}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "6px",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    background: inventoryTab === "categories" ? "var(--color-primary, #2563eb)" : "transparent",
+                    color: inventoryTab === "categories" ? "#ffffff" : "var(--text-muted, #64748b)",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  By Subject Category
+                </button>
+              </div>
+            </div>
+
             <div className="table-container">
-              <table className="ui-table">
-                <thead>
-                  <tr>
-                    <th>CATEGORY</th>
-                    <th>TOTAL COPIES</th>
-                    <th>AVAILABLE</th>
-                    <th>BORROWED</th>
-                    <th>UTILIZATION</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inventory.categories.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>No books in the catalog yet.</td></tr>
-                  ) : (
-                    inventory.categories.map((c) => {
-                      const pct = c.total > 0 ? Math.round((c.borrowed / c.total) * 100) : 0;
-                      return (
-                        <tr key={c.category}>
-                          <td className="book-title-cell">{c.category}</td>
-                          <td>{c.total}</td>
-                          <td>{c.available}</td>
-                          <td>{c.borrowed}</td>
-                          <td>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <div style={{ flex: 1, height: "6px", background: "var(--bg-base)", borderRadius: "3px", overflow: "hidden", minWidth: "80px" }}>
-                                <div style={{ width: `${pct}%`, height: "100%", background: "var(--color-primary)", borderRadius: "3px" }} />
+              {inventoryTab === "sections" ? (
+                <table className="ui-table">
+                  <thead>
+                    <tr>
+                      <th>LIBRARY SECTION</th>
+                      <th>TOTAL COPIES</th>
+                      <th>AVAILABLE</th>
+                      <th>BORROWED</th>
+                      <th>UTILIZATION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(!inventory.sections || inventory.sections.length === 0) ? (
+                      <tr><td colSpan={5} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>No section data available.</td></tr>
+                    ) : (
+                      inventory.sections.map((s) => {
+                        const pct = s.total > 0 ? Math.round((s.borrowed / s.total) * 100) : 0;
+                        return (
+                          <tr key={s.section}>
+                            <td className="book-title-cell" style={{ fontWeight: 600, color: "var(--color-primary)" }}>{s.section}</td>
+                            <td>{s.total}</td>
+                            <td>{s.available}</td>
+                            <td>{s.borrowed}</td>
+                            <td>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ flex: 1, height: "6px", background: "var(--bg-base)", borderRadius: "3px", overflow: "hidden", minWidth: "80px" }}>
+                                  <div style={{ width: `${pct}%`, height: "100%", background: "var(--color-primary)", borderRadius: "3px" }} />
+                                </div>
+                                <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "34px" }}>{pct}%</span>
                               </div>
-                              <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "34px" }}>{pct}%</span>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="ui-table">
+                  <thead>
+                    <tr>
+                      <th>CATEGORY</th>
+                      <th>TOTAL COPIES</th>
+                      <th>AVAILABLE</th>
+                      <th>BORROWED</th>
+                      <th>UTILIZATION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inventory.categories.length === 0 ? (
+                      <tr><td colSpan={5} style={{ textAlign: "center", padding: "16px", color: "var(--text-muted)" }}>No books in the catalog yet.</td></tr>
+                    ) : (
+                      inventory.categories.map((c) => {
+                        const pct = c.total > 0 ? Math.round((c.borrowed / c.total) * 100) : 0;
+                        return (
+                          <tr key={c.category}>
+                            <td className="book-title-cell">{c.category}</td>
+                            <td>{c.total}</td>
+                            <td>{c.available}</td>
+                            <td>{c.borrowed}</td>
+                            <td>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ flex: 1, height: "6px", background: "var(--bg-base)", borderRadius: "3px", overflow: "hidden", minWidth: "80px" }}>
+                                  <div style={{ width: `${pct}%`, height: "100%", background: "var(--color-primary)", borderRadius: "3px" }} />
+                                </div>
+                                <span style={{ fontSize: "12px", color: "var(--text-muted)", minWidth: "34px" }}>{pct}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </>

@@ -161,26 +161,29 @@ export default function Landing() {
   }, []);
 
   const categories = [
-    { id: "everything", label: "Everything" },
-    { id: "fiction", label: "Fiction & Literature" },
-    { id: "history", label: "History & Culture" },
-    { id: "science", label: "Science & Tech" },
-    { id: "filipiniana", label: "Filipiniana" },
-    { id: "children", label: "Children's Corner" },
+    { id: "everything", label: "All Collections" },
+    { id: "filipiniana", label: "🇵🇭 Filipiniana" },
+    { id: "reserved", label: "🩺 Reserved (M.R.)" },
+    { id: "periodical", label: "📰 Periodicals & Journals" },
+    { id: "circulation", label: "📚 Circulation & Kids" },
+    { id: "reference", label: "🎓 Reference & Theses" },
+    { id: "special", label: "⚖️ Special Collection & Law" }
   ];
 
   const filteredLibraryBooks = libraryBooks.filter((book) => {
     const query = searchQuery.trim().toLowerCase();
-    const searchableText = [book.title, book.author, book.category].filter(Boolean).join(" ").toLowerCase();
+    const searchableText = [book.title, book.author, book.category, book.section].filter(Boolean).join(" ").toLowerCase();
     const matchesSearch = !query || searchableText.includes(query);
-    const category = String(book.category || "").toLowerCase();
+    const sec = String(book.section || "").toLowerCase();
+    const cat = String(book.category || "").toLowerCase();
     const matchesCategory =
       activeCategory === "everything" ||
-      (activeCategory === "fiction" && /(fiction|literature|novel|poetry)/.test(category)) ||
-      (activeCategory === "history" && /(history|culture|historical)/.test(category)) ||
-      (activeCategory === "science" && /(science|technology|tech|computer)/.test(category)) ||
-      (activeCategory === "filipiniana" && /filipiniana/.test(category)) ||
-      (activeCategory === "children" && /(children|child|juvenile|young adult)/.test(category));
+      (activeCategory === "filipiniana" && (sec.includes("filipiniana") || cat.includes("filipiniana"))) ||
+      (activeCategory === "reserved" && (sec.includes("reserved") || sec.includes("m.r.") || cat.includes("medical"))) ||
+      (activeCategory === "periodical" && (sec.includes("periodical") || cat.includes("periodical") || cat.includes("journal"))) ||
+      (activeCategory === "circulation" && (sec.includes("circulation") || cat.includes("children") || /(fiction|literature|novel|science|mathematics)/.test(cat))) ||
+      (activeCategory === "reference" && (sec.includes("reference") || sec.includes("theses") || cat.includes("reference"))) ||
+      (activeCategory === "special" && (sec.includes("special") || sec.includes("law") || cat.includes("law") || cat.includes("governance") || cat.includes("peace")));
 
     return matchesSearch && matchesCategory;
   });
@@ -835,6 +838,11 @@ export default function Landing() {
                 <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                   <div style={{ paddingRight: "44px", marginBottom: "20px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+                      {selectedCatalogBook.section && (
+                        <span style={{ fontSize: "12px", fontWeight: 700, padding: "3px 10px", borderRadius: "12px", background: "#E8F0FE", color: "#1967D2" }}>
+                          🏛️ {selectedCatalogBook.section}
+                        </span>
+                      )}
                       <span style={{ fontSize: "12px", fontWeight: 700, padding: "3px 10px", borderRadius: "12px", background: "#F5E6CA", color: "#6F4E37" }}>
                         {selectedCatalogBook.category || "General"}
                       </span>
@@ -854,6 +862,10 @@ export default function Landing() {
                     display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "14px",
                     background: "#FAF7F2", padding: "20px", borderRadius: "14px", border: "1px solid #DCC7AA", marginBottom: "24px"
                   }}>
+                    <div>
+                      <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#8C7768", fontWeight: 700 }}>Library Section</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#8E4A49" }}>{selectedCatalogBook.section || "Circulation Section"}</span>
+                    </div>
                     <div>
                       <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#8C7768", fontWeight: 700 }}>Category</span>
                       <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4B3832" }}>{selectedCatalogBook.category || "General"}</span>

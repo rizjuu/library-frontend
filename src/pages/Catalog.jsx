@@ -17,6 +17,15 @@ import {
 } from "lucide-react";
 import api from "../api";
 
+export const LIBRARY_SECTIONS = [
+  "Filipiniana Section",
+  "Reserved Section (M.R. Books)",
+  "Periodical Section (Includes Journal, Magazine, Leaflets, Brochures, Clippings)",
+  "Circulation Section (includes Fiction Books & Children's Corner)",
+  "Reference Section (Includes Theses & Dissertations)",
+  "Special Collection Section (Includes Law Books, GAD Corner, Peace & Order Corner & Governor's Collection)"
+];
+
 function Catalog({
   books = [],
   loading = false,
@@ -29,6 +38,7 @@ function Catalog({
   showToast = () => {}
 }) {
   const [search, setSearch] = useState("");
+  const [sectionFilter, setSectionFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [shelfFilter, setShelfFilter] = useState("all");
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
@@ -37,6 +47,14 @@ function Catalog({
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // Extract unique Sections from live books array merged with official library sections
+  const sections = Array.from(
+    new Set([
+      ...LIBRARY_SECTIONS,
+      ...books.map((b) => b.section).filter(Boolean)
+    ])
+  );
 
   // Extract unique Categories & Shelves from live books array
   const categories = Array.from(
@@ -63,6 +81,7 @@ function Catalog({
   // Check if any filter is active
   const hasActiveFilters =
     search.trim() !== "" ||
+    sectionFilter !== "all" ||
     categoryFilter !== "all" ||
     shelfFilter !== "all" ||
     availabilityFilter !== "all" ||
@@ -70,13 +89,14 @@ function Catalog({
 
   const handleResetFilters = () => {
     setSearch("");
+    setSectionFilter("all");
     setCategoryFilter("all");
     setShelfFilter("all");
     setAvailabilityFilter("all");
     setDecadeFilter("all");
   };
 
-  // Comprehensive 4-Filter Engine
+  // Comprehensive 5-Filter Engine
   const filteredBooks = books.filter((book) => {
     // Keyword Search
     const q = search.trim().toLowerCase();
@@ -87,34 +107,40 @@ function Catalog({
       (book.barcode && book.barcode.toLowerCase().includes(q)) ||
       (book.isbn && book.isbn.toLowerCase().includes(q)) ||
       (book.publisher && book.publisher.toLowerCase().includes(q)) ||
+      (book.section && book.section.toLowerCase().includes(q)) ||
       (book.category && book.category.toLowerCase().includes(q)) ||
       (book.shelf && book.shelf.toLowerCase().includes(q));
 
-    // 1. Category Filter
+    // 1. Section Filter (Official Library Sectioning)
+    const matchesSection =
+      sectionFilter === "all" ||
+      (book.section && book.section.toLowerCase() === sectionFilter.toLowerCase());
+
+    // 2. Category Filter
     const matchesCategory =
       categoryFilter === "all" ||
       (book.category && book.category.toLowerCase() === categoryFilter.toLowerCase());
 
-    // 2. Shelf Filter
+    // 3. Shelf Filter
     const matchesShelf =
       shelfFilter === "all" ||
       (book.shelf && book.shelf.toLowerCase() === shelfFilter.toLowerCase());
 
-    // 3. Availability Filter
+    // 4. Availability Filter
     const isBookAvailable = book.available !== false && book.status !== "borrowed";
     const matchesAvailability =
       availabilityFilter === "all" ||
       (availabilityFilter === "available" && isBookAvailable) ||
       (availabilityFilter === "borrowed" && !isBookAvailable);
 
-    // 4. Publication Decade Filter
+    // 5. Publication Decade Filter
     const bookDecade = getDecade(book.publicationYear);
     const matchesDecade =
       decadeFilter === "all" ||
       (decadeFilter === "unknown" && bookDecade === "unknown") ||
       bookDecade === decadeFilter;
 
-    return matchesSearch && matchesCategory && matchesShelf && matchesAvailability && matchesDecade;
+    return matchesSearch && matchesSection && matchesCategory && matchesShelf && matchesAvailability && matchesDecade;
   });
 
   // Pagination Configuration & Handlers
@@ -124,7 +150,7 @@ function Catalog({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, categoryFilter, shelfFilter, availabilityFilter, decadeFilter]);
+  }, [search, sectionFilter, categoryFilter, shelfFilter, availabilityFilter, decadeFilter]);
 
   const totalPages = Math.ceil(filteredBooks.length / BOOKS_PER_PAGE) || 1;
   const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
@@ -177,6 +203,7 @@ function Catalog({
       title: selectedBook.title || "",
       isbn: selectedBook.isbn || "",
       author: selectedBook.author || "",
+      section: selectedBook.section || "Circulation Section (includes Fiction Books & Children's Corner)",
       category: selectedBook.category || "",
       publisher: selectedBook.publisher || "",
       publicationYear: selectedBook.publicationYear || "",
@@ -202,6 +229,7 @@ function Catalog({
         title: editForm.title,
         isbn: editForm.isbn,
         author: editForm.author,
+        section: editForm.section,
         category: editForm.category,
         publisher: editForm.publisher,
         publicationYear: editForm.publicationYear === "" ? null : Number(editForm.publicationYear),
@@ -210,7 +238,7 @@ function Catalog({
       });
       showToast(`Book "${editForm.title}" updated successfully.`, "success");
       setIsEditing(false);
-      setSelectedBook(res.data.book);
+      setSelectedBook(res.data.book || { ...selectedBook, ...editForm });
       if (onBookUpdated) onBookUpdated();
     } catch (error) {
       console.error("Failed to update book:", error);
@@ -261,7 +289,7 @@ function Catalog({
         )}
       </div>
 
-      {/* Comprehensive 4-Filter Catalog Toolbar */}
+      {/* Comprehensive 5-Filter Catalog Toolbar */}
       <div ref={catalogTopRef} className="catalog-toolbar" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
         {/* Search Input */}
         <div className="toolbar-search" style={{ flex: "1 1 240px", minWidth: "220px" }}>
@@ -269,13 +297,31 @@ function Catalog({
           <input
             type="text"
             className="toolbar-search-input"
-            placeholder="Search by title, author, ISBN, barcode..."
+            placeholder="Search by title, author, section, ISBN, barcode..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Filter 1: Category */}
+        {/* Filter 1: Official Library Section */}
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <select
+            className="toolbar-select"
+            value={sectionFilter}
+            onChange={(e) => setSectionFilter(e.target.value)}
+            aria-label="Filter by Library Section"
+            style={{ minWidth: "170px", maxWidth: "260px" }}
+          >
+            <option value="all">🏛️ All Library Sections</option>
+            {sections.map((sec) => (
+              <option key={sec} value={sec}>
+                {sec}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Filter 2: Category */}
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <select
             className="toolbar-select"
@@ -454,6 +500,13 @@ function Catalog({
 
                 <div>
                   <div className="book-meta-rows">
+                    {book.section && (
+                      <div className="book-meta-row">
+                        <span className="book-meta-label">Section</span>
+                        <span className="book-meta-value" style={{ fontWeight: 600, color: "var(--color-primary)" }}>{book.section}</span>
+                      </div>
+                    )}
+
                     <div className="book-meta-row">
                       <span className="book-meta-label">Category</span>
                       <span className="book-meta-value">{book.category || "General"}</span>
@@ -775,6 +828,18 @@ function Catalog({
                         />
                       </div>
                       <div>
+                        <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>LIBRARY SECTION</label>
+                        <select
+                          value={editForm.section}
+                          onChange={(e) => handleEditChange("section", e.target.value)}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "13.5px" }}
+                        >
+                          {sections.map((sec) => (
+                            <option key={sec} value={sec}>{sec}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
                         <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700", marginBottom: "4px" }}>CATEGORY</label>
                         <input
                           type="text"
@@ -852,7 +917,12 @@ function Catalog({
                       </div>
 
                       <div>
-                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>5. CATEGORY</span>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>5. LIBRARY SECTION</span>
+                        <span style={{ fontSize: "13.5px", fontWeight: "700", color: "var(--color-primary)" }}>{selectedBook.section || "Circulation Section (includes Fiction Books & Children's Corner)"}</span>
+                      </div>
+
+                      <div>
+                        <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", fontWeight: "700" }}>6. CATEGORY</span>
                         <span style={{ fontSize: "13.5px", fontWeight: "600", color: "var(--text-primary)" }}>{selectedBook.category || "General"}</span>
                       </div>
 

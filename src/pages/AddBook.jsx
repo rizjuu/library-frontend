@@ -24,6 +24,7 @@ function AddBook({ onBookAdded, showToast }) {
     barcode: "",
     title: "",
     author: "",
+    section: "Circulation Section (includes Fiction Books & Children's Corner)",
     category: "",
     publisher: "",
     publicationYear: "",
@@ -47,6 +48,7 @@ function AddBook({ onBookAdded, showToast }) {
       barcode: "",
       title: "",
       author: "",
+      section: "Circulation Section (includes Fiction Books & Children's Corner)",
       category: "",
       publisher: "",
       publicationYear: "",
@@ -72,6 +74,7 @@ function AddBook({ onBookAdded, showToast }) {
         barcode: formData.barcode.trim(),
         title: formData.title.trim(),
         author: formData.author.trim(),
+        section: formData.section.trim() || "Circulation Section (includes Fiction Books & Children's Corner)",
         category: formData.category.trim() || "General",
         publisher: formData.publisher.trim() || "N/A",
         publicationYear: formData.publicationYear ? Number(formData.publicationYear) : null,
@@ -186,6 +189,29 @@ function AddBook({ onBookAdded, showToast }) {
                   onChange={handleChange}
                   required
                 />
+              </div>
+
+              {/* Library Section (Official Capitol Library Sectioning) */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="section">
+                  <Layers size={16} className="w-4 h-4" />
+                  Library Section *
+                </label>
+                <select
+                  id="section"
+                  name="section"
+                  className="form-input"
+                  value={formData.section}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="Filipiniana Section">Filipiniana Section</option>
+                  <option value="Reserved Section (M.R. Books)">Reserved Section (M.R. Books)</option>
+                  <option value="Periodical Section (Includes Journal, Magazine, Leaflets, Brochures, Clippings)">Periodical Section (Includes Journal, Magazine, Leaflets, Brochures, Clippings)</option>
+                  <option value="Circulation Section (includes Fiction Books & Children's Corner)">Circulation Section (includes Fiction Books & Children's Corner)</option>
+                  <option value="Reference Section (Includes Theses & Dissertations)">Reference Section (Includes Theses & Dissertations)</option>
+                  <option value="Special Collection Section (Includes Law Books, GAD Corner, Peace & Order Corner & Governor's Collection)">Special Collection Section (Includes Law Books, GAD Corner, Peace & Order Corner & Governor's Collection)</option>
+                </select>
               </div>
 
               {/* 5. Category */}
